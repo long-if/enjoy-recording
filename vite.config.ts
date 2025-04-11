@@ -1,12 +1,17 @@
 import { defineConfig } from "vite";
 import path from "node:path";
 import electron from "vite-plugin-electron/simple";
+import ViteAutoImport from "unplugin-auto-import/vite";
 import vue from "@vitejs/plugin-vue";
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
+    ViteAutoImport({
+      imports: ['vue', 'vue-router', 'pinia', 'vue-i18n'],
+      dts: './auto-imports.d.ts',
+    }),
     electron({
       main: {
         // Shortcut of `build.lib.entry`.
@@ -23,8 +28,18 @@ export default defineConfig({
       renderer:
         process.env.NODE_ENV === "test"
           ? // https://github.com/electron-vite/vite-plugin-electron-renderer/issues/78#issuecomment-2053600808
-            undefined
+          undefined
           : {},
     }),
   ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    }
+  },
+  css: {
+    preprocessorOptions: {
+      scss: { api: 'modern-compiler' },
+    }
+  },
 });

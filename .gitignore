@@ -25,3 +25,8 @@ dist-ssr
 
 
 release
+
+# misc
+.DS_Store
+*.pem
+.npmrc

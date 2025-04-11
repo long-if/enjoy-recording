@@ -1,0 +1,29 @@
+/* Bubble menu */
+.bubble-menu {
+    background-color: var(--white);
+    border: 1px solid var(--gray-1);
+    border-radius: 0.7rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    padding: 0.2rem;
+    column-gap: 2px;
+    font-size: 1rem;
+
+    button {
+        border: none;
+        border-radius: 0.5rem;
+        background-color: unset;
+
+        &:hover {
+            background-color: var(--gray-3);
+        }
+
+        &.is-active {
+            background-color: var(--orange);
+
+            &:hover {
+                background-color: var(--orange-contrast);
+            }
+        }
+    }
+}
