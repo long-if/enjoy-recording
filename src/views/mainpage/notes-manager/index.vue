@@ -85,14 +85,6 @@ function locate() {
 }
 
 defineExpose({
-    unshow: () => {
-        // @ts-ignore
-        notesManager.value.style.display = "none";
-    },
-    show: () => {
-        // @ts-ignore
-        notesManager.value.style.display = "flex";
-    },
     tree,
 });
 

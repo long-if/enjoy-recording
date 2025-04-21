@@ -5,6 +5,7 @@ import ViteAutoImport from "unplugin-auto-import/vite";
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver, NaiveUiResolver } from 'unplugin-vue-components/resolvers'
+import RekaResolver from 'reka-ui/resolver'
 import vue from "@vitejs/plugin-vue";
 
 // https://vitejs.dev/config/
@@ -16,10 +17,10 @@ export default defineConfig({
       dts: './auto-imports.d.ts',
     }),
     AutoImport({
-      resolvers: [ElementPlusResolver(), NaiveUiResolver()],
+      resolvers: [ElementPlusResolver(), NaiveUiResolver(), RekaResolver()],
     }),
     Components({
-      resolvers: [ElementPlusResolver(), NaiveUiResolver()],
+      resolvers: [ElementPlusResolver(), NaiveUiResolver(), RekaResolver()],
     }),
     electron({
       main: {

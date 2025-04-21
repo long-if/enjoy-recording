@@ -85,6 +85,7 @@ const handleTabsEdit = (
 
 <style scoped lang="scss">
 .main {
+    height: 100%;
     flex: 1;
     background-color: #ffffff;
     overflow: hidden;

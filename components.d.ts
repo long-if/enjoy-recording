@@ -15,8 +15,14 @@ declare module 'vue' {
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     NButton: typeof import('naive-ui')['NButton']
     NTree: typeof import('naive-ui')['NTree']
+    ResizableHandle: typeof import('./src/components/ui/resizable/ResizableHandle.vue')['default']
+    ResizablePanel: typeof import('./src/components/ui/resizable/ResizablePanel.vue')['default']
+    ResizablePanelGroup: typeof import('./src/components/ui/resizable/ResizablePanelGroup.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SplitterGroup: typeof import('reka-ui')['SplitterGroup']
+    SplitterPanel: typeof import('reka-ui')['SplitterPanel']
+    SplitterResizeHandle: typeof import('reka-ui')['SplitterResizeHandle']
     Tiptap: typeof import('./src/components/tiptap.vue')['default']
   }
 }

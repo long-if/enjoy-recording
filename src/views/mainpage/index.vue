@@ -1,20 +1,33 @@
 <template>
-    <div class="layout">
+    <!-- TODO 移动端适配 -->
+    <div class="layout" :class="openedNotes.length === 0 ? 'gray' : 'white'">
         <LeftSiderbar
             :leftBarVisibility="leftBarVisibility"
-            @toggle="toggleHandler" />
+            @toggle="leftBarVisibility = !leftBarVisibility" />
         <!-- TODO 响应式split实现 -->
-        <div class="splitpane">
-            <NotesManager
-                class="notes-group-list"
-                @add-notes="addNotesHandler"
-                @locate-note="scrollTo"
-                ref="notesGroupList" />
-            <NotesTabsView
-                class="main"
-                @add-notes="addNotesHandler"
-                @locate-note="scrollTo" />
-        </div>
+        <Splitpanes class="splitpanes" @resized="storePaneSize">
+            <pane
+                v-if="leftBarVisibility"
+                class="pane1"
+                max-size="50"
+                :size="paneSize">
+                <NotesManager
+                    class="notes-group-list"
+                    @add-notes="addNotesHandler"
+                    @locate-note="scrollTo"
+                    ref="notesGroupList" />
+            </pane>
+            <pane
+                class="pane2"
+                min-size="50"
+                max-size="100"
+                :size="100 - paneSize">
+                <NotesTabsView
+                    class="main"
+                    @add-notes="addNotesHandler"
+                    @locate-note="scrollTo" />
+            </pane>
+        </Splitpanes>
     </div>
 </template>
 
@@ -22,7 +35,8 @@
 import LeftSiderbar from "@/views/mainpage/left-sidebar/index.vue";
 import NotesManager from "@/views/mainpage/notes-manager/index.vue";
 import NotesTabsView from "@/views/mainpage/notes-tabs-view/index.vue";
-import Split from "split.js";
+import { Splitpanes, Pane } from "splitpanes";
+import { useStorage } from "@vueuse/core";
 import { useNotesTabsStore } from "@/store/notesTabs";
 import { useNotesTreeStore } from "@/store/notesTree";
 const notesTabsStore = useNotesTabsStore();
@@ -30,36 +44,13 @@ const notesTreeStore = useNotesTreeStore();
 const { data, selectedKeys } = storeToRefs(notesTreeStore);
 const { openedNotes, notesKeys, activeNoteName } = storeToRefs(notesTabsStore);
 
-const split = ref();
 const leftBarVisibility = ref(true);
 const notesManager = useTemplateRef("notesGroupList");
+const paneSize = useStorage("paneSize", 20);
 
-onMounted(() => {
-    split.value = Split([".notes-group-list", ".main"], {
-        sizes: [18, 82],
-        minSize: [300, 500],
-        cursor: "ew-resize",
-        expandToMin: true,
-    });
-});
-
-function toggleHandler() {
-    leftBarVisibility.value = !leftBarVisibility.value;
-    if (leftBarVisibility.value) {
-        notesManager.value?.show();
-        split.value = Split([".notes-group-list", ".main"], {
-            sizes: [18, 82],
-            minSize: [300, 500],
-            cursor: "ew-resize",
-            expandToMin: true,
-        });
-    } else {
-        notesManager.value?.unshow();
-        split.value?.setSizes([0, 100]);
-        split.value?.collapse(0);
-        split.value?.destroy();
-    }
-}
+const storePaneSize = ({ prevPane }: { prevPane: { size: number } }) => {
+    paneSize.value = prevPane.size;
+};
 
 function scrollTo(option: NotesTreeNode) {
     notesManager.value?.tree?.scrollTo(option);
@@ -95,13 +86,27 @@ function addNotesHandler() {
     display: flex;
     flex-direction: row;
 
+    &.gray {
+        background-color: #f5f5f5;
+    }
+    &.white {
+        background-color: #ffffff;
+    }
 
-    .splitpane {
+    .splitpanes {
         width: 100%;
         height: 100%;
         display: flex;
         flex-direction: row;
         flex: 1;
+
+        .pane1 {
+            min-width: 250px;
+        }
+
+        .pane2 {
+            min-width: 500px;
+        }
     }
 }
 </style>
@@ -142,5 +147,40 @@ function addNotesHandler() {
         pointer-events: all;
         /* 关键：允许伪元素响应鼠标事件 */
     }
+}
+
+.splitpanes__splitter {
+    height: 100vh;
+    background-color: #ccc;
+    outline: 1px solid transparent;
+    transition: 0.3s ease-in-out;
+    cursor: ew-resize !important;
+    position: relative;
+    top: -8px;
+    z-index: 999;
+
+    &:hover {
+        outline: 1px solid var(--theme-color);
+        background-color: var(--theme-color);
+    }
+}
+.splitpanes__splitter:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    transition: opacity 0.4s;
+    // background-color: var(--theme-color);
+    // outline: 1px solid transparent;
+    opacity: 0;
+    z-index: 1;
+}
+.splitpanes__splitter:hover:before {
+    opacity: 1;
+}
+.splitpanes--vertical > .splitpanes__splitter:before {
+    left: -10px;
+    right: -5px;
+    height: 100%;
 }
 </style>
