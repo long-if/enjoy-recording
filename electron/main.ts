@@ -28,22 +28,43 @@ let win: BrowserWindow | null
 
 function createWindow() {
   win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    icon: path.join(process.env.VITE_PUBLIC, 'logo.png'),
+    width:1400,
+    height: 900,
+    minWidth: 800,
+    minHeight: 650,
+    titleBarStyle: 'hidden',
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
     },
+    ...(process.platform !== 'darwin' ? {
+      titleBarOverlay: {
+        color: '#ffffff',
+        symbolColor: '#fb6b3f',
+        height: 48
+      }
+    } : {}),
+    darkTheme: true,
+  })
+  
+  // 添加错误处理
+  win.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.error('Failed to load:', errorCode, errorDescription)
   })
 
-  // Test active push message to Renderer-process.
+  // 添加加载完成事件处理
   win.webContents.on('did-finish-load', () => {
+    console.log('Window loaded successfully')
     win?.webContents.send('main-process-message', (new Date).toLocaleString())
   })
 
   if (VITE_DEV_SERVER_URL) {
+    console.log('Loading development URL:', VITE_DEV_SERVER_URL)
     win.loadURL(VITE_DEV_SERVER_URL)
   } else {
-    // win.loadFile('dist/index.html')
-    win.loadFile(path.join(RENDERER_DIST, 'index.html'))
+    const indexPath = path.join(RENDERER_DIST, 'index.html')
+    console.log('Loading production file:', indexPath)
+    win.loadFile(indexPath)
   }
 }
 

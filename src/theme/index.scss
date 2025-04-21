@@ -23,14 +23,13 @@
   */
 html,
 body {
-  height: auto;
-
+  height: 100%;
+  overflow: hidden;
+  
   #app {
-    height: auto;
-    margin: 0 auto;
-    padding: 1rem;
-    text-align: start;
-
+    height: 100%;
+    position: relative;
+    z-index: 999;
   }
 }
 
@@ -86,3 +85,4 @@ h6 {
 #__next {
   isolation: isolate;
 }
+

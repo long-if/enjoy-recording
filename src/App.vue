@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import HelloWorld from '@/components/HelloWorld.vue'
-import tiptap from '@/components/tiptap.vue'
 </script>
 
 <template>
-  <tiptap />
+  <router-view v-slot="{ Component }">
+    <component :is="Component" />
+  </router-view>
 </template>
 
-<style lang="scss">
-
-</style>
+<style lang="scss"></style>

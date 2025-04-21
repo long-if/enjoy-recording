@@ -7,21 +7,23 @@
     "output": "release/${version}"
   },
   "files": [
-    "dist",
-    "dist-electron"
+    "dist/**/*",
+    "dist-electron/**/*",
+    "node_modules/**/*"
   ],
-  "mac": {
+  "mac": {	
     "target": [
       "dmg"
     ],
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
   },
   "win": {
+    "icon": "public/logo.png",
     "target": [
       {
         "target": "nsis",
         "arch": [
-          "ia32"
+          "x64"
         ]
       }
     ],

@@ -2,6 +2,9 @@ import { defineConfig } from "vite";
 import path from "node:path";
 import electron from "vite-plugin-electron/simple";
 import ViteAutoImport from "unplugin-auto-import/vite";
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver, NaiveUiResolver } from 'unplugin-vue-components/resolvers'
 import vue from "@vitejs/plugin-vue";
 
 // https://vitejs.dev/config/
@@ -11,6 +14,12 @@ export default defineConfig({
     ViteAutoImport({
       imports: ['vue', 'vue-router', 'pinia', 'vue-i18n'],
       dts: './auto-imports.d.ts',
+    }),
+    AutoImport({
+      resolvers: [ElementPlusResolver(), NaiveUiResolver()],
+    }),
+    Components({
+      resolvers: [ElementPlusResolver(), NaiveUiResolver()],
     }),
     electron({
       main: {
