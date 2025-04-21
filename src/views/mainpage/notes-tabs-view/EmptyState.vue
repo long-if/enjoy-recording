@@ -29,7 +29,7 @@ const emit = defineEmits<{
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-top: calc(var(--top-height) - 1px);
+    margin-top: var(--top-height);
     padding-bottom: 2rem;
     height: 100%;
     width: 100%;

@@ -189,6 +189,7 @@ function handleDrop({ node, dragNode, dropPosition }: TreeDropInfo) {
         --box-size: 30px;
         --size: 18px;
         height: var(--top-height);
+        box-sizing: content-box;
         flex-shrink: 0;
         background-color: white;
         display: flex;

@@ -85,6 +85,7 @@ const handleTabsEdit = (
 
 <style scoped lang="scss">
 .main {
+    width: 100%;
     height: 100%;
     flex: 1;
     background-color: #ffffff;
@@ -108,8 +109,8 @@ const handleTabsEdit = (
     // width: fit-content;
     margin: 0;
     padding-left: 1rem;
-    margin-right: 210px;
-    // border: none;
+    margin-right: 160px;
+    border: none;
     z-index: 99;
     justify-content: flex-start;
     user-select: none;
@@ -123,5 +124,9 @@ const handleTabsEdit = (
     .el-tabs__new-tab {
         app-region: no-drag;
     }
+
+}
+.el-tabs__content {
+    border-top: 1px solid var(--el-border-color-light);
 }
 </style>

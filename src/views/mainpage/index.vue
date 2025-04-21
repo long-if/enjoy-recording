@@ -4,7 +4,6 @@
         <LeftSiderbar
             :leftBarVisibility="leftBarVisibility"
             @toggle="leftBarVisibility = !leftBarVisibility" />
-        <!-- TODO 响应式split实现 -->
         <Splitpanes class="splitpanes" @resized="storePaneSize">
             <pane
                 v-if="leftBarVisibility"
@@ -94,11 +93,11 @@ function addNotesHandler() {
     }
 
     .splitpanes {
-        width: 100%;
+        width: calc(100% - var(--leftbar-width));
         height: 100%;
         display: flex;
         flex-direction: row;
-        flex: 1;
+        flex: 1 0;
 
         .pane1 {
             min-width: 250px;
