@@ -15,40 +15,50 @@
                     :name="note.key"
                     :key="note.key">
                     <el-scrollbar class="note-view">
-                        <Editor />
+                        <Editor
+                            v-model:content="note.content!"
+                            v-model:title="note.title!"
+                            :version="note.version!" />
                     </el-scrollbar>
                 </el-tab-pane>
             </el-tabs>
         </template>
         <template v-else>
-            <EmptyState @add-notes="emit('addNotes')" />
+            <EmptyState />
         </template>
     </div>
 </template>
 
 <script setup lang="ts">
+import { useModal } from "naive-ui";
 import Editor from "@/views/editor/index.vue";
 import EmptyState from "./EmptyState.vue";
 import type { TabPaneName } from "element-plus";
+import EventEmitter from "@/lib/EventEmitter";
 import { useNotesTreeStore } from "@/store/notesTree";
 import { useNotesTabsStore } from "@/store/notesTabs";
-import { ta } from "element-plus/es/locales.mjs";
+import { JSONContent } from "@tiptap/core";
+import { useNoteApi } from "@/api/note";
+import { version } from "vue";
 const notesTabsStore = useNotesTabsStore();
 const { openedNotes, activeNoteName, notesKeys } = storeToRefs(notesTabsStore);
 const notesTreeStore = useNotesTreeStore();
 const { selectedKeys, expandedKeys } = storeToRefs(notesTreeStore);
-
-const emit = defineEmits<{
-    (e: "addNotes"): void;
-    (e: "locateNote", option: NotesTreeNode): void;
-}>();
+const { getNotes, getNoteByKey, updateNotes } = useNoteApi();
 
 function tabChangeHandler(targetName: TabPaneName) {
     selectedKeys.value = [targetName as string];
-    // 是否展开target标签页对应文档的树节点位置并定位
-    // let option = notesTreeStore.allNodes.find((node) => node.key === tab?.key);
-    // expandedKeys.value.push(...option?.parentKeys!);
-    // emit("locateNote", option!);
+    let option = openedNotes.value.find((node) => node.key === targetName)!;
+    (async function () {
+        try {
+            const response = await getNoteByKey({ key: targetName as string });
+            console.log("获取单个笔记数据成功", response.data);
+            option = Object.assign(option, response.data.node);
+        } catch (error) {
+            console.error("Error fetching notes:", error);
+        }
+    })();
+    EventEmitter.emit("updateNoteByFetch", option.content);
 }
 
 const handleTabsEdit = (
@@ -56,7 +66,7 @@ const handleTabsEdit = (
     action: "remove" | "add"
 ) => {
     if (action === "add") {
-        emit("addNotes");
+        EventEmitter.emit("addNote");
     } else if (action === "remove") {
         const tabs = openedNotes.value;
         let activeName = activeNoteName.value;
@@ -65,7 +75,7 @@ const handleTabsEdit = (
                 if (tab.key === targetName) {
                     const nextTab = tabs[index + 1] || tabs[index - 1];
                     if (nextTab) {
-                        activeName = nextTab.key;
+                        activeName = nextTab.key as string;
                     }
                 }
             });
@@ -124,7 +134,6 @@ const handleTabsEdit = (
     .el-tabs__new-tab {
         app-region: no-drag;
     }
-
 }
 .el-tabs__content {
     border-top: 1px solid var(--el-border-color-light);

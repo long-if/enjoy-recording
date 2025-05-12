@@ -3,7 +3,7 @@
         <div class="card">
             <div class="header">
                 <div class="title">
-                    <img class="logo" src="@/assets/logo.png" alt="">
+                    <img class="logo" src="@/assets/logo.png" alt="" />
                     <span>享记</span>
                 </div>
                 <div class="label">—— Enjoying Recording ——</div>
@@ -13,50 +13,100 @@
                     <svg class="icon" aria-hidden="true">
                         <use xlink:href="#icon-zhanghao"></use>
                     </svg>
-                    <input type="text" id="username" name="username" placeholder="账号" required />
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        placeholder="账号"
+                        v-model="username"
+                        required />
                 </label>
                 <label for="password" class="password-icon">
                     <svg class="icon" aria-hidden="true">
-                        <use xlink:href="#icon-mima"></use>
+                        <use xlinkhref="#icon-mima"></use>
                     </svg>
-                    <input type="password" id="password" name="password" placeholder="密码" ref="password" required />
-                    <svg class="icon eye" aria-hidden="true" @click="showHide" ref="toggle">
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="密码"
+                        ref="passwordRef"
+                        v-model="password"
+                        required />
+                    <svg
+                        class="icon eye"
+                        aria-hidden="true"
+                        @click="showHide"
+                        ref="toggle">
                         <use :xlink:href="code"></use>
                     </svg>
                 </label>
-                <input type="button" class="login-button" value="登录" @click="router.push('/mainpage')" />
-                <el-divider class="forgot" content-position="center">忘记密码？</el-divider>
+                <input
+                    type="button"
+                    class="login-button"
+                    value="登录"
+                    @click="handleLogin" />
+                <el-divider class="forgot" content-position="center"
+                    >忘记密码？</el-divider
+                >
             </form>
         </div>
     </div>
 </template>
 
 <script setup>
+import { useStorage } from "@vueuse/core";
+import { useLoginApi } from "@/api/login";
 const router = useRouter();
+const { login } = useLoginApi();
+const username = ref("");
+const password = ref("");
 
 // 密码显隐
-const input = useTemplateRef('password');
-const code = ref('#icon-a-Property1xianshi');
+const input = useTemplateRef("passwordRef");
+const code = ref("#icon-a-Property1xianshi");
 const showHide = () => {
     if (input.value.type == "password") {
-        input.value.setAttribute('type', 'text')
-        code.value = "#icon-a-Property1yincang"
+        input.value.setAttribute("type", "text");
+        code.value = "#icon-a-Property1yincang";
+    } else {
+        input.value.setAttribute("type", "password");
+        code.value = "#icon-a-Property1xianshi";
     }
-    else {
-        input.value.setAttribute('type', 'password')
-        code.value = "#icon-a-Property1xianshi"
+};
+
+async function handleLogin() {
+    if (username.value === "" || password.value === "") {
+        ElMessage.error("请输入账号和密码！");
+        return;
+    }
+    // 这里可以添加登录逻辑，比如调用API等
+    // 登录成功后跳转到首页
+    try {
+        const response = await login({
+            username: username.value,
+            password: password.value,
+        });
+        ElMessage.success("登录成功！");
+        // 登录成功后可以存储token等信息
+        console.log(response.data.token);
+        const token = useStorage("token");
+        token.value = response.data.token;
+        router.push("/mainpage");
+    } catch (error) {
+        ElMessage.error("登录失败，请检查账号和密码！");
+        return;
     }
 }
 </script>
 
 <style scoped lang="scss">
-
 .container {
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100%;
-    background: linear-gradient(to bottom, #FE5723, #F9FAFB);
+    background: linear-gradient(to bottom, #fe5723, #f9fafb);
 
     .card {
         width: 450px;
@@ -93,7 +143,7 @@ const showHide = () => {
 
                 .logo {
                     height: 64px;
-                    margin-right: .5rem;
+                    margin-right: 0.5rem;
                     float: left;
                 }
 
@@ -104,7 +154,7 @@ const showHide = () => {
             }
 
             .label {
-                margin-top: .5rem;
+                margin-top: 0.5rem;
                 font-size: 12px;
                 color: #fff;
             }
@@ -132,11 +182,10 @@ const showHide = () => {
                     width: 100%;
                     border: none;
                     outline: none;
-                    border-bottom: 1.8px solid #FE5723;
+                    border-bottom: 1.8px solid #fe5723;
                     height: 3rem;
                     line-height: 2em;
                     padding-left: 2em;
-
                 }
 
                 #password {
@@ -156,7 +205,6 @@ const showHide = () => {
                     cursor: pointer;
                 }
             }
-
 
             .login-button {
                 appearance: none;

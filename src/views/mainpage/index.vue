@@ -8,11 +8,12 @@
             <pane
                 v-if="leftBarVisibility"
                 class="pane1"
-                max-size="50"
+                max-size="40"
                 :size="paneSize">
                 <NotesManager
                     class="notes-group-list"
-                    @add-notes="addNotesHandler"
+                    @add-note="addNoteHandler"
+                    @add-notes-group="addNotesGroupHandler"
                     @locate-note="scrollTo"
                     ref="notesGroupList" />
             </pane>
@@ -21,10 +22,7 @@
                 min-size="50"
                 max-size="100"
                 :size="100 - paneSize">
-                <NotesTabsView
-                    class="main"
-                    @add-notes="addNotesHandler"
-                    @locate-note="scrollTo" />
+                <NotesTabsView class="main" />
             </pane>
         </Splitpanes>
     </div>
@@ -34,18 +32,35 @@
 import LeftSiderbar from "@/views/mainpage/left-sidebar/index.vue";
 import NotesManager from "@/views/mainpage/notes-manager/index.vue";
 import NotesTabsView from "@/views/mainpage/notes-tabs-view/index.vue";
+import { useModal, useDialog } from "naive-ui";
 import { Splitpanes, Pane } from "splitpanes";
+import { debounce, throttle } from "lodash-es";
 import { useStorage } from "@vueuse/core";
+import { useNoteApi } from "@/api/note";
 import { useNotesTabsStore } from "@/store/notesTabs";
 import { useNotesTreeStore } from "@/store/notesTree";
+import EventEmitter from "@/lib/EventEmitter";
 const notesTabsStore = useNotesTabsStore();
 const notesTreeStore = useNotesTreeStore();
-const { data, selectedKeys } = storeToRefs(notesTreeStore);
+const { data, selectedKeys, expandedKeys } = storeToRefs(notesTreeStore);
 const { openedNotes, notesKeys, activeNoteName } = storeToRefs(notesTabsStore);
 
 const leftBarVisibility = ref(true);
 const notesManager = useTemplateRef("notesGroupList");
 const paneSize = useStorage("paneSize", 20);
+const { getNotes, getNoteByKey, updateNotes, updateNoteByKey } = useNoteApi();
+// const modal = useModal();
+let dialog = useDialog();
+
+onMounted(async () => {
+    try {
+        const response = await getNotes();
+        console.log("获取笔记数据成功", response.data);
+        data.value = response.data.notes_tree;
+    } catch (error) {
+        console.error("Error fetching notes:", error);
+    }
+});
 
 const storePaneSize = ({ prevPane }: { prevPane: { size: number } }) => {
     paneSize.value = prevPane.size;
@@ -55,26 +70,99 @@ function scrollTo(option: NotesTreeNode) {
     notesManager.value?.tree?.scrollTo(option);
 }
 
-let i = 2;
-function addNotesHandler() {
-    const title = `未命名`;
-    const key = `4${++i}`;
-    const isLeaf = true;
-    openedNotes.value.push({
-        title: "未命名",
-        key,
-        content: `<h1>未命名</h1>`,
+const syncNotesTree = async () => {
+    try {
+        const response = await updateNotes({ notes_tree: data.value });
+        console.log("同步笔记树结构成功", response.data);
+    } catch (error) {
+        console.error("Error syncing notes:", error);
+    }
+};
+const updateNotesTree = throttle(syncNotesTree, 500, {
+    leading: false,
+    trailing: true,
+});
+EventEmitter.on("updateNotesTree", updateNotesTree);
+
+const syncNote = async (noteData: { key: string; nodeData: object }) => {
+    try {
+        const response = await updateNoteByKey({
+            key: noteData.key,
+            nodeData: noteData.nodeData,
+        });
+        let option = openedNotes.value.find(
+            (node) => node.key === noteData.key
+        )!;
+        option = Object.assign(option, response.data.node);
+        console.log("同步单个笔记数据成功", response.data);
+    } catch (error) {
+        console.error("Error syncing note:", error);
+    }
+};
+const updateNote = throttle(syncNote, 2000, {
+    leading: false,
+    trailing: true,
+});
+EventEmitter.on("updateNote", updateNote);
+EventEmitter.on("conflict", () => {
+    dialog.info({
+        title: "当前文档内容有更新!",
+        content: "请基于最新内容进行编辑",
+        closable: false,
+        maskClosable: false,
+        positiveText: "确认",
+        onPositiveClick: async () => {
+            try {
+                const response = await getNoteByKey({
+                    key: activeNoteName.value as string,
+                });
+                console.log("获取最新笔记数据成功", response.data);
+                let option = openedNotes.value.find(
+                    (node) => node.key === activeNoteName.value
+                )!;
+                option = Object.assign(option, response.data.node);
+                EventEmitter.emit("updateNoteByFetch", option.content);
+            } catch (error) {
+                console.error("Error fetching notes:", error);
+            }
+        },
+        style: {},
     });
-    notesKeys.value.add(key);
-    activeNoteName.value = key;
-    selectedKeys.value = [key];
-    data.value.push({
+});
+
+function addNoteHandler() {
+    const title = `未命名`;
+    const key = `${data.value.length + 1}`;
+    const isLeaf = true;
+    const newNoteLeafNode = {
         title,
         key,
         isLeaf,
         parentKeys: [],
-        content: "<h1>未命名</h1>",
-    });
+        content: {},
+    };
+    openedNotes.value.push(newNoteLeafNode);
+    notesKeys.value.add(key);
+    activeNoteName.value = key;
+    selectedKeys.value = [key];
+    data.value.push(newNoteLeafNode);
+    syncNotesTree();
+}
+EventEmitter.on("addNote", addNoteHandler);
+
+function addNotesGroupHandler() {
+    const title = `未命名`;
+    const key = `${data.value.length + 1}`;
+    const isLeaf = false;
+    const newNoteGroupNode = {
+        title,
+        key,
+        isLeaf,
+        parentKeys: [],
+        children: [],
+    };
+    data.value.push(newNoteGroupNode);
+    syncNotesTree();
 }
 </script>
 
@@ -88,6 +176,7 @@ function addNotesHandler() {
     &.gray {
         background-color: #f5f5f5;
     }
+
     &.white {
         background-color: #ffffff;
     }
@@ -163,6 +252,7 @@ function addNotesHandler() {
         background-color: var(--theme-color);
     }
 }
+
 .splitpanes__splitter:before {
     content: "";
     position: absolute;
@@ -174,9 +264,11 @@ function addNotesHandler() {
     opacity: 0;
     z-index: 1;
 }
+
 .splitpanes__splitter:hover:before {
     opacity: 1;
 }
+
 .splitpanes--vertical > .splitpanes__splitter:before {
     left: -10px;
     right: -5px;

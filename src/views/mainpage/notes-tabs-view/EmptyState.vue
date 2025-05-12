@@ -5,7 +5,7 @@
             text
             color="#FF6600"
             class="button add-notes"
-            @click="emit('addNotes')">
+            @click="EventEmitter.emit('addNote')">
             新建文档
         </n-button>
         <n-button text color="#FF6600" class="button open-notes">
@@ -18,9 +18,8 @@
 </template>
 
 <script setup lang="ts">
-const emit = defineEmits<{
-    (e: "addNotes"): void;
-}>();
+import EventEmitter from "@/lib/EventEmitter";
+
 </script>
 
 <style scoped lang="scss">
@@ -33,6 +32,7 @@ const emit = defineEmits<{
     padding-bottom: 2rem;
     height: 100%;
     width: 100%;
+    border-top: 1px solid var(--gray-3);
     background-color: #f5f5f5;
     text-align: center;
     --gap: 1.2rem;

@@ -35,7 +35,7 @@ function onItemClick(e: Event, id: number) {
         if (history.pushState) { // eslint-disable-line
             history.pushState(null, '', `#${id}`) // eslint-disable-line
         }
-
+        // BUG 大纲锚点跳转问题
         const scrollElement = document.querySelector('.el-scrollbar__wrap') as HTMLElement;
         scrollElement.scrollTo({
             top: element.getBoundingClientRect().top - 40,

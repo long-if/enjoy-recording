@@ -1,6 +1,10 @@
 .tiptap {
+    h1:first-child {
+        user-select: none;
+    }
+
     /* Placeholder (at the top) */
-    p.is-editor-empty:first-child::before {
+    h1.is-editor-empty:first-child::before {
         color: var(--gray-4);
         content: attr(data-placeholder);
         float: left;
@@ -9,7 +13,7 @@
     }
 
     /* Placeholder (on every new line) */
-    .is-empty::before {
+    p.is-empty::before {
         color: var(--gray-4);
         content: attr(data-placeholder);
         float: left;

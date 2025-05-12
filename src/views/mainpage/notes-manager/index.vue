@@ -1,12 +1,12 @@
 <template>
     <div class="notes-group-list" ref="notesGroupList">
         <div class="options">
-            <div class="icon-box" @click="emit('addNotes')">
+            <div class="icon-box" @click="emit('addNote')">
                 <svg class="icon" aria-hidden="true">
                     <use xlink:href="#icon-xinjianwendang"></use>
                 </svg>
             </div>
-            <div class="icon-box">
+            <div class="icon-box" @click="emit('addNotesGroup')">
                 <svg class="icon" aria-hidden="true">
                     <use xlink:href="#icon-tianjiafenzu"></use>
                 </svg>
@@ -33,7 +33,6 @@
             </div>
         </div>
         <div class="notes">
-            <!-- TODO 替换展开图标，添加前缀图标 -->
             <n-tree
                 ref="tree"
                 block-line
@@ -47,6 +46,7 @@
                 :data="data"
                 :expanded-keys="expandedKeys"
                 :selected-keys="selectedKeys"
+                :render-switcher-icon="renderSwitcherIcon"
                 :override-default-node-click-behavior="override"
                 @drop="handleDrop"
                 @update:expanded-keys="handleExpandedKeysChange" />
@@ -55,12 +55,20 @@
 </template>
 
 <script setup lang="ts">
+import Icon from "./icon.vue";
+import {
+    FileTrayFullOutline as File,
+    Folder as Folder,
+    FolderOpenOutline as FolderOpened,
+} from "@vicons/ionicons5";
 import type {
     TreeDropInfo,
     TreeOption,
     TreeOverrideNodeClickBehavior,
     NTree,
 } from "naive-ui";
+import { useNoteApi } from "@/api/note";
+import EventEmitter from "@/lib/EventEmitter";
 import { useNotesTreeStore } from "@/store/notesTree";
 import { useNotesTabsStore } from "@/store/notesTabs";
 const notesTreeStore = useNotesTreeStore();
@@ -69,8 +77,10 @@ const notesTabsStore = useNotesTabsStore();
 const { openedNotes, notesKeys, activeNoteName } = storeToRefs(notesTabsStore);
 const notesManager = useTemplateRef<HTMLElement>("notesGroupList");
 const tree = useTemplateRef("tree");
+const { getNotes, getNoteByKey, updateNotes } = useNoteApi();
 const emit = defineEmits<{
-    (e: "addNotes"): void;
+    (e: "addNote"): void;
+    (e: "addNotesGroup"): void;
     (e: "locateNote", option: NotesTreeNode): void;
 }>();
 
@@ -91,18 +101,28 @@ defineExpose({
 const willExpand = ref(false);
 function toggleExpand() {
     willExpand.value = expandedKeys.value.length === 0;
+    const noLeafNodes = notesTreeStore.allNodes.filter((node) => !node.isLeaf);
     if (willExpand.value) {
-        expandedKeys.value = notesTreeStore.allNodes
-            .filter((node) => !node.isLeaf)
-            .map((node) => node.key! as string);
+        expandedKeys.value = noLeafNodes.map((node) => node.key! as string);
     } else {
         expandedKeys.value = [];
     }
 }
 
-const override: TreeOverrideNodeClickBehavior = ({ option }) => {
+const renderSwitcherIcon = () => h(NIcon, null, { default: () => h(Icon) });
+
+// @ts-ignore
+const override: TreeOverrideNodeClickBehavior = async ({ option }) => {
     if (option.children) {
         return "toggleExpand";
+    }
+    // let noteTab = notesTreeStore.allNodes.find((node) => node.key === option.key)!;
+    try {
+        const response = await getNoteByKey({ key: option.key! as string });
+        console.log("获取单个笔记数据成功", response.data);
+        option = Object.assign(option, response.data.node);
+    } catch (error) {
+        console.error("Error fetching notes:", error);
     }
     addTabs(option);
     return "default";
@@ -110,17 +130,12 @@ const override: TreeOverrideNodeClickBehavior = ({ option }) => {
 
 function addTabs(option: NotesTreeNode) {
     if (notesKeys.value.has(option.key! as string)) {
-        activeNoteName.value = openedNotes.value.find(
-            (note) => note.key === option.key
-        )?.key!;
+        activeNoteName.value = option.key! as string;
         selectedKeys.value = [option.key! as string];
+        EventEmitter.emit("updateNoteByFetch", option.content);
         return;
     }
-    openedNotes.value.push({
-        title: option.title! as string,
-        key: option.key! as string,
-        content: option.content!,
-    });
+    openedNotes.value.push(option);
     notesKeys.value.add(option.key! as string);
     activeNoteName.value = option.key! as string;
     selectedKeys.value = [option.key! as string];
@@ -143,9 +158,17 @@ function findSiblingsAndIndex(
     return [null, null];
 }
 
-function handleExpandedKeysChange(currentExpandedKeys: string[]) {
+function handleExpandedKeysChange(
+    currentExpandedKeys: string[],
+    _option: Array<TreeOption | null>,
+    meta: {
+        node: TreeOption | null;
+        action: "expand" | "collapse" | "filter";
+    }
+) {
     expandedKeys.value = currentExpandedKeys;
 }
+// BUG 拖拽后parentKeys未更新
 function handleDrop({ node, dragNode, dropPosition }: TreeDropInfo) {
     const [dragNodeSiblings, dragNodeIndex] = findSiblingsAndIndex(
         dragNode,

@@ -135,7 +135,7 @@ const { leftBarVisibility } = defineProps(["leftBarVisibility"]);
 </style>
 
 <style lang="scss">
-.el-divider--horizontal {
+.left-sidebar .el-divider--horizontal {
     width: 60% !important;
     margin: 0 !important;
 }

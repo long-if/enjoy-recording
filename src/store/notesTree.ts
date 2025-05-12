@@ -1,4 +1,9 @@
 import { defineStore } from 'pinia';
+import {
+    FileTrayFullOutline as File,
+    Folder as Folder,
+    FolderOpenOutline as FolderOpened,
+} from "@vicons/ionicons5";
 
 export const useNotesTreeStore = defineStore('notesTree', {
     state: () => ({
@@ -35,7 +40,7 @@ function createData(level = 4, baseKey = ""): NotesTreeNode[] | undefined {
         const isLeaf = level === 1;
         const parentKeys = breakdown(baseKey);
         const children = !isLeaf ? createData(level - 1, key) : undefined;
-        const content = isLeaf ? '' : undefined;
+        const content = isLeaf ? {} : undefined;
         return {
             title,
             key,

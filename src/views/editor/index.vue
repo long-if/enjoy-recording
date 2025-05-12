@@ -3,7 +3,10 @@
         <drag-handle :editor="editor">
             <div class="custom-drag-handle"></div>
         </drag-handle>
-        <editor-content class="editor-container" :editor="editor" spellcheck="false" />
+        <editor-content
+            class="editor-container"
+            :editor="editor"
+            spellcheck="false" />
         <div class="sidebar" v-if="!Capacitor.isNativePlatform()">
             <div class="sidebar-options">
                 <div class="label-large">Table of contents</div>
@@ -15,75 +18,102 @@
             </div>
         </div>
         <!--  BUG 字符统计失效 -->
-        <div class="character-count">{{ editor.storage.characterCount.characters() + '字' }}</div>
+        <div class="character-count">
+            {{ editor.storage.characterCount.characters() + "字" }}
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { Capacitor } from '@capacitor/core';
-import { BubbleMenu, EditorContent, useEditor } from '@tiptap/vue-3';
-import { Editor } from '@tiptap/core'
-import StarterKit from '@tiptap/starter-kit'
-import Document from '@tiptap/extension-document'
-import Placeholder from '@tiptap/extension-placeholder'
-import Highlight from '@tiptap/extension-highlight'
-import Typography from '@tiptap/extension-typography'
-import { Color } from '@tiptap/extension-color'
-import ListItem from '@tiptap/extension-list-item'
-import ListKeymap from '@tiptap/extension-list-keymap'
-import TextStyle from '@tiptap/extension-text-style'
-import FontFamily from '@tiptap/extension-font-family'
-import TextAlign from '@tiptap/extension-text-align'
-import Image from '@tiptap/extension-image'
-import Dropcursor from '@tiptap/extension-dropcursor'
-import Table from '@tiptap/extension-table'
-import TableCell from '@tiptap/extension-table-cell'
-import TableHeader from '@tiptap/extension-table-header'
-import TableRow from '@tiptap/extension-table-row'
-import TaskItem from '@tiptap/extension-task-item'
-import TaskList from '@tiptap/extension-task-list'
-import CharacterCount from '@tiptap/extension-character-count'
-import { DragHandle } from '@tiptap-pro/extension-drag-handle-vue-3'
-import NodeRange from '@tiptap-pro/extension-node-range'
-import FileHandler from '@tiptap-pro/extension-file-handler'
-import Gapcursor from '@tiptap/extension-gapcursor'
-import { getHierarchicalIndexes, TableOfContents } from '@tiptap-pro/extension-table-of-contents'
-import Underline from '@tiptap/extension-underline'
-import Link from '@tiptap/extension-link'
-import Subscript from '@tiptap/extension-subscript'
-import Superscript from '@tiptap/extension-superscript'
-import { Import } from '@tiptap-pro/extension-import'
-import ToC from './table-of-content/ToC.vue'
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+import { Capacitor } from "@capacitor/core";
+import { BubbleMenu, EditorContent, useEditor } from "@tiptap/vue-3";
+import { Editor, JSONContent, Node } from "@tiptap/core";
+import StarterKit from "@tiptap/starter-kit";
+import Document from "@tiptap/extension-document";
+import Placeholder from "@tiptap/extension-placeholder";
+import Highlight from "@tiptap/extension-highlight";
+import Typography from "@tiptap/extension-typography";
+import { Color } from "@tiptap/extension-color";
+import ListItem from "@tiptap/extension-list-item";
+import ListKeymap from "@tiptap/extension-list-keymap";
+import TextStyle from "@tiptap/extension-text-style";
+import FontFamily from "@tiptap/extension-font-family";
+import TextAlign from "@tiptap/extension-text-align";
+import Image from "@tiptap/extension-image";
+import Dropcursor from "@tiptap/extension-dropcursor";
+import Table from "@tiptap/extension-table";
+import TableCell from "@tiptap/extension-table-cell";
+import TableHeader from "@tiptap/extension-table-header";
+import TableRow from "@tiptap/extension-table-row";
+import TaskItem from "@tiptap/extension-task-item";
+import TaskList from "@tiptap/extension-task-list";
+import CharacterCount from "@tiptap/extension-character-count";
+import { DragHandle } from "@tiptap-pro/extension-drag-handle-vue-3";
+import NodeRange from "@tiptap-pro/extension-node-range";
+import FileHandler from "@tiptap-pro/extension-file-handler";
+import Gapcursor from "@tiptap/extension-gapcursor";
+import {
+    getHierarchicalIndexes,
+    TableOfContents,
+} from "@tiptap-pro/extension-table-of-contents";
+import Underline from "@tiptap/extension-underline";
+import Link from "@tiptap/extension-link";
+import Subscript from "@tiptap/extension-subscript";
+import Superscript from "@tiptap/extension-superscript";
+import { Import } from "@tiptap-pro/extension-import";
+import ToC from "./table-of-content/ToC.vue";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 // load all languages with "all" or common languages with "common"
-import { all, createLowlight } from 'lowlight'
+import { all, createLowlight } from "lowlight";
+import EventEmitter from "@/lib/EventEmitter";
+import { useModal } from "naive-ui";
+import { useNotesTreeStore } from "@/store/notesTree";
+import { useNotesTabsStore } from "@/store/notesTabs";
+import { useNoteApi } from "@/api/note";
+const notesTabsStore = useNotesTabsStore();
+const { openedNotes, activeNoteName, notesKeys } = storeToRefs(notesTabsStore);
+const notesTreeStore = useNotesTreeStore();
+const { selectedKeys, expandedKeys } = storeToRefs(notesTreeStore);
+const { getNotes, getNoteByKey, updateNotes } = useNoteApi();
+
+const content = defineModel<JSONContent>("content", { required: true });
+const title = defineModel<string>("title", { required: true });
+const emit = defineEmits<{
+    (e: "update:content", value: string): void;
+    (e: "update:title", value: string): void;
+}>();
+const { version } = defineProps<{
+    version: string;
+}>();
 
 // create a lowlight instance
-const lowlight = createLowlight(all)
+const lowlight = createLowlight(all);
 
-const items = ref<any>([])
+const CustomDocument = Document.extend({
+    content: "heading block*",
+});
+
+const items = ref<any>([]);
 // TODO 编辑器功能完善，气泡菜单、固定菜单
-// TODO 编辑器内容保存实现
-// TODO 笔记title内容与label同步
 const editor = useEditor({
     content: ``,
     extensions: [
-        Document,
+        CustomDocument,
         StarterKit.configure({
             document: false,
         }),
-        // Placeholder.configure({
-        //     placeholder: ({ node }) => {
-        //         if (node.type.name === 'heading') {
-        //             return 'What's the title?'
-        //         }
-
-        //         return 'Can you add some further context?'
-        //     },
-        // }),
         Placeholder.configure({
-            placeholder: 'Write something...',
+            placeholder: ({ node }) => {
+                if (node.type.name === "heading") {
+                    return "What's the title?";
+                }
+
+                return "Write something...";
+            },
         }),
+        // Placeholder.configure({
+        //     placeholder: "Write something...",
+        // }),
         Highlight.configure({ multicolor: true }),
         Typography,
         // Currently the import extension requires Images to be inline
@@ -95,7 +125,7 @@ const editor = useEditor({
         TextStyle.configure({ types: [ListItem.name] } as any),
         FontFamily,
         TextAlign.configure({
-            types: ['heading', 'paragraph'],
+            types: ["heading", "paragraph"],
         }),
         Table.configure({
             resizable: true,
@@ -114,23 +144,28 @@ const editor = useEditor({
         CharacterCount,
         NodeRange.configure({
             // allow to select only on depth 0
-            // depth: 0,
+            depth: 0,
             key: null,
         }),
         FileHandler.configure({
-            allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
+            allowedMimeTypes: [
+                "image/png",
+                "image/jpeg",
+                "image/gif",
+                "image/webp",
+            ],
             onDrop: (currentEditor, files) => {
-                insertImage(currentEditor, files)
+                insertImage(currentEditor, files);
             },
             onPaste: (currentEditor, files) => {
-                insertImage(currentEditor, files)
+                insertImage(currentEditor, files);
             },
         }),
         Gapcursor,
         TableOfContents.configure({
             getIndex: getHierarchicalIndexes,
-            onUpdate: content => {
-                items.value = content
+            onUpdate: (content) => {
+                items.value = content;
             },
         }),
         ListKeymap,
@@ -139,48 +174,84 @@ const editor = useEditor({
         Subscript,
         Superscript,
         Import.configure({
-            appId: 'your-app-id',
-            token: 'your-jwt',
+            appId: "your-app-id",
+            token: "your-jwt",
             // ATTENTION: This is for demo purposes only
             // endpoint: variables.tiptapConvertBaseUrl,
             // This is just for the demo, you need to implement your own image upload endpoint
-            imageUploadCallbackUrl: 'http://long-if.top/api/upload',
+            imageUploadCallbackUrl: "http://long-if.top/api/upload",
             experimentalDocxImport: true,
         }),
     ],
-})
+    onCreate({ editor }) {
+        // The editor is ready.
+        // console.log("editor is ready, content:", content.value);
+        editor.commands.setContent(content.value);
+        editor.commands.focus();
+    },
+    onUpdate({ editor }) {
+        const newContent = editor.getJSON();
+        let titleValue = "未命名";
+        // 找到第一个一级标题进行相关判断处理
+        const $heading = editor.$node("heading");
+        if ($heading && $heading.textContent) titleValue = $heading.textContent;
+        // const titleNode = newContent?.content?.find(
+        //     (node) => node?.type === "heading"
+        // ) as JSONContent;
+        // const titleContent = titleNode?.content;
+        // if (titleContent && titleContent[0].text) {
+        //     titleValue = titleContent[0].text;
+        // }
+        title.value = titleValue;
+        content.value = newContent;
+        EventEmitter.emit("updateNote", {
+            key: activeNoteName.value,
+            nodeData: {
+                title: titleValue,
+                content: newContent,
+                version: version,
+            },
+        });
+    },
+});
 
-// @ts-ignore
-window.editor = editor
+EventEmitter.on("updateNoteByFetch", (data: JSONContent) => {
+    console.log("updateNoteByFetch事件的处理函数被调用");
+    editor.value?.commands.setContent(data);
+});
 
 function insertImage(currentEditor: Editor, files: File[]) {
-    files.forEach(file => {
-        const fileReader = new FileReader()
+    files.forEach((file) => {
+        const fileReader = new FileReader();
 
-        fileReader.readAsDataURL(file)
+        fileReader.readAsDataURL(file);
         fileReader.onload = () => {
-            currentEditor.chain().insertContentAt(currentEditor.state.selection.anchor, {
-                type: 'image',
-                attrs: {
-                    src: fileReader.result,
-                },
-            }).focus().run()
-        }
-    })
+            currentEditor
+                .chain()
+                .insertContentAt(currentEditor.state.selection.anchor, {
+                    type: "image",
+                    attrs: {
+                        src: fileReader.result,
+                    },
+                })
+                .focus()
+                .run();
+        };
+    });
 }
 
 onBeforeUnmount(() => {
-    editor.value?.destroy()
-})
+    editor.value?.destroy();
+});
 
 onMounted(() => {
-    if (editor.value) {
-        console.log('Editor initialized:', editor.value.storage.characterCount)
-    }
-})
+    // if (editor.value) {
+    //     console.log("Editor initialized:", editor.value.storage.characterCount);
+    // }
+});
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .container {
     --margin: 1rem;
     height: auto;
@@ -237,6 +308,26 @@ onMounted(() => {
     transition: all 0.5s cubic-bezier(0.65, 0.05, 0.36, 1);
 }
 
+/* Character count */
+.character-count {
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    color: var(--gray-5);
+    font-size: 0.75rem;
+    gap: 0.5rem;
+    margin: 2rem;
+    position: fixed;
+    right: 0;
+    bottom: 0;
+
+    @media screen and (max-width: 540px) {
+        transform: scale(0);
+    }
+}
+</style>
+
+<style lang="scss">
 .table-of-contents {
     display: flex;
     flex-direction: column;
@@ -245,7 +336,7 @@ onMounted(() => {
     overflow: auto;
     text-decoration: none;
 
-    >div {
+    > div {
         border-radius: 0.25rem;
         padding-left: calc(0.875rem * (var(--level) - 1));
         transition: all 0.2s cubic-bezier(0.65, 0.05, 0.36, 1);
@@ -275,27 +366,8 @@ onMounted(() => {
         text-decoration: none;
 
         &::before {
-            content: attr(data-item-index) '.';
+            content: attr(data-item-index) ".";
         }
-    }
-}
-
-
-/* Character count */
-.character-count {
-    display: flex;
-    align-items: center;
-    justify-content: end;
-    color: var(--gray-5);
-    font-size: 0.75rem;
-    gap: .5rem;
-    margin: 2rem;
-    position: fixed;
-    right: 0;
-    bottom: 0;
-
-    @media screen and (max-width: 540px) {
-        transform: scale(0);
     }
 }
 </style>
