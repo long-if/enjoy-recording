@@ -12,8 +12,6 @@
                 :size="paneSize">
                 <NotesManager
                     class="notes-group-list"
-                    @add-note="addNoteHandler"
-                    @add-notes-group="addNotesGroupHandler"
                     @locate-note="scrollTo"
                     ref="notesGroupList" />
             </pane>
@@ -51,6 +49,7 @@ const paneSize = useStorage("paneSize", 20);
 const { getNotes, getNoteByKey, updateNotes, updateNoteByKey } = useNoteApi();
 // const modal = useModal();
 let dialog = useDialog();
+let timer: NodeJS.Timeout;
 
 onMounted(async () => {
     try {
@@ -60,7 +59,25 @@ onMounted(async () => {
     } catch (error) {
         console.error("Error fetching notes:", error);
     }
+
+    // async function checkLatest() {
+    //     try {
+    //         const response = await getNotes();
+    //         console.log("笔记树更新");
+    //         data.value = response.data.notes_tree;
+    //     } catch (error) {
+    //         console.error("Error fetching notes:", error);
+    //     } finally {
+    //         timer = setTimeout(checkLatest, 3000);
+    //     }
+    // }
+
+    // timer = setTimeout(checkLatest, 3000);
 });
+
+// onUnmounted(() => {
+//     clearTimeout(timer);
+// });
 
 const storePaneSize = ({ prevPane }: { prevPane: { size: number } }) => {
     paneSize.value = prevPane.size;
@@ -99,7 +116,7 @@ const syncNote = async (noteData: { key: string; nodeData: object }) => {
         console.error("Error syncing note:", error);
     }
 };
-const updateNote = throttle(syncNote, 2000, {
+const updateNote = throttle(syncNote, 3000, {
     leading: false,
     trailing: true,
 });
@@ -121,7 +138,7 @@ EventEmitter.on("conflict", () => {
                     (node) => node.key === activeNoteName.value
                 )!;
                 option = Object.assign(option, response.data.node);
-                EventEmitter.emit("updateNoteByFetch", option.content);
+                EventEmitter.emit("updateNoteByFetch", option);
             } catch (error) {
                 console.error("Error fetching notes:", error);
             }
@@ -129,41 +146,6 @@ EventEmitter.on("conflict", () => {
         style: {},
     });
 });
-
-function addNoteHandler() {
-    const title = `未命名`;
-    const key = `${data.value.length + 1}`;
-    const isLeaf = true;
-    const newNoteLeafNode = {
-        title,
-        key,
-        isLeaf,
-        parentKeys: [],
-        content: {},
-    };
-    openedNotes.value.push(newNoteLeafNode);
-    notesKeys.value.add(key);
-    activeNoteName.value = key;
-    selectedKeys.value = [key];
-    data.value.push(newNoteLeafNode);
-    syncNotesTree();
-}
-EventEmitter.on("addNote", addNoteHandler);
-
-function addNotesGroupHandler() {
-    const title = `未命名`;
-    const key = `${data.value.length + 1}`;
-    const isLeaf = false;
-    const newNoteGroupNode = {
-        title,
-        key,
-        isLeaf,
-        parentKeys: [],
-        children: [],
-    };
-    data.value.push(newNoteGroupNode);
-    syncNotesTree();
-}
 </script>
 
 <style scoped lang="scss">

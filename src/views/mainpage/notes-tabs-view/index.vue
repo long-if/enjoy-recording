@@ -18,6 +18,7 @@
                         <Editor
                             v-model:content="note.content!"
                             v-model:title="note.title!"
+                            :note-key="note.key!"
                             :version="note.version!" />
                     </el-scrollbar>
                 </el-tab-pane>
@@ -58,7 +59,7 @@ function tabChangeHandler(targetName: TabPaneName) {
             console.error("Error fetching notes:", error);
         }
     })();
-    EventEmitter.emit("updateNoteByFetch", option.content);
+    EventEmitter.emit("updateNoteByFetch", option);
 }
 
 const handleTabsEdit = (

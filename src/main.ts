@@ -4,6 +4,7 @@ import App from './App.vue'
 import router from "./router";
 import { createPinia } from 'pinia'
 import '@/theme/index.scss'
+import '@icon-park/vue-next/styles/index.css'
 import 'splitpanes/dist/splitpanes.css'
 
 const pinia = createPinia()

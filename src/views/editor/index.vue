@@ -70,6 +70,7 @@ import { useModal } from "naive-ui";
 import { useNotesTreeStore } from "@/store/notesTree";
 import { useNotesTabsStore } from "@/store/notesTabs";
 import { useNoteApi } from "@/api/note";
+import { OptionIcon } from "lucide-vue-next";
 const notesTabsStore = useNotesTabsStore();
 const { openedNotes, activeNoteName, notesKeys } = storeToRefs(notesTabsStore);
 const notesTreeStore = useNotesTreeStore();
@@ -82,7 +83,8 @@ const emit = defineEmits<{
     (e: "update:content", value: string): void;
     (e: "update:title", value: string): void;
 }>();
-const { version } = defineProps<{
+const { noteKey, version } = defineProps<{
+    noteKey: string | number;
     version: string;
 }>();
 
@@ -215,9 +217,39 @@ const editor = useEditor({
     },
 });
 
-EventEmitter.on("updateNoteByFetch", (data: JSONContent) => {
-    console.log("updateNoteByFetch事件的处理函数被调用");
-    editor.value?.commands.setContent(data);
+EventEmitter.on("updateNoteByFetch", (option: NotesTreeNode) => {
+    // console.log("option.key", option.key);
+    // console.log("key", noteKey);
+    if (option.key === noteKey) {
+        console.log("updateNoteByFetch事件的处理函数被调用");
+        editor.value?.commands.setContent(option.content!);
+    }
+});
+
+EventEmitter.on("updateNoteTitle", (keyToUpdate: string, newTitle: string) => {
+    // console.log("keyToUpdate", keyToUpdate);
+    // console.log("key", noteKey);
+    if (keyToUpdate === noteKey) {
+        console.log("updateNoteTitle事件的处理函数被调用");
+        const newContent = editor.value!.getJSON();
+        const titleNode = newContent?.content?.find(
+            (node) => node?.type === "heading"
+        ) as JSONContent;
+        const titleContent = titleNode?.content;
+        if (titleContent) {
+            titleContent[0].text = newTitle;
+        } else {
+            titleNode.content = [
+                {
+                    type: "text",
+                    text: newTitle,
+                },
+            ];
+        }
+        editor.value?.commands.setContent(newContent);
+        content.value = newContent;
+        EventEmitter.emit("updateNotesTree");
+    }
 });
 
 function insertImage(currentEditor: Editor, files: File[]) {

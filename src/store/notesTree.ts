@@ -1,13 +1,9 @@
-import { defineStore } from 'pinia';
-import {
-    FileTrayFullOutline as File,
-    Folder as Folder,
-    FolderOpenOutline as FolderOpened,
-} from "@vicons/ionicons5";
+import { deleteNode } from "node_modules/@tiptap/core/dist/commands";
+import { defineStore } from "pinia";
 
-export const useNotesTreeStore = defineStore('notesTree', {
+export const useNotesTreeStore = defineStore("notesTree", {
     state: () => ({
-        data: createData() as NotesTreeNode[],
+        data: [] as NotesTreeNode[],
         level: 4,
         selectedKeys: [] as string[],
         expandedKeys: [] as string[],
@@ -23,43 +19,137 @@ export const useNotesTreeStore = defineStore('notesTree', {
             }
             state.data.forEach(traverse);
             return res;
-        }
+        },
     },
     actions: {
-        addNode(node: NotesTreeNode, parentKey: string) {
-
+        addNote(parent: NotesTreeNode | null): NotesTreeNode {
+            const title = `未命名`;
+            const key =
+                Date.now().toString(36) + Math.random().toString(36).slice(2);
+            const isLeaf = true;
+            if (!parent) {
+                const newNoteLeafNode = {
+                    title,
+                    key,
+                    isLeaf,
+                    parentKeys: [],
+                    content: {},
+                };
+                this.data.push(newNoteLeafNode);
+                return newNoteLeafNode;
+            }
+            const parentKeys = parent.parentKeys
+                ? [...parent.parentKeys, parent.key!]
+                : [parent.key!];
+            const newNoteLeafNode = {
+                title,
+                key,
+                isLeaf,
+                parentKeys,
+                content: {},
+            } as NotesTreeNode;
+            if (parent.children) {
+                parent.children.unshift(newNoteLeafNode);
+            } else {
+                parent.children = [newNoteLeafNode];
+            }
+            return newNoteLeafNode;
         },
-    }
-})
+        addNotesGroup(parent: NotesTreeNode | null): NotesTreeNode {
+            const title = `未命名`;
+            const key =
+                Date.now().toString(36) + Math.random().toString(36).slice(2);
+            const isLeaf = false;
+            if (!parent) {
+                const newNoteGroupNode = {
+                    title,
+                    key,
+                    isLeaf,
+                    parentKeys: [],
+                    children: [],
+                };
+                this.data.push(newNoteGroupNode);
+                return newNoteGroupNode;
+            }
+            const parentKeys = parent.parentKeys
+                ? [...parent.parentKeys, parent.key!]
+                : [parent.key!];
+            const newNoteGroupNode = {
+                title,
+                key,
+                isLeaf,
+                parentKeys,
+                children: [],
+            } as NotesTreeNode;
+            if (parent.children) {
+                parent.children.unshift(newNoteGroupNode);
+            } else {
+                parent.children = [newNoteGroupNode];
+            }
+            return newNoteGroupNode;
+        },
+        deleteNode(node: NotesTreeNode) {
+            function findParentNode(
+                key: string,
+                nodes: NotesTreeNode[]
+            ): NotesTreeNode[] | undefined {
+                for (const node of nodes) {
+                    if (node.key === key) {
+                        return nodes;
+                    }
+                    if (node.children && node.children.length) {
+                        const found = findParentNode(key, node.children);
+                        if (found) {
+                            return found;
+                        }
+                    }
+                }
+                return undefined;
+            }
+            const parentNode = findParentNode(node.key as string, this.data)!;
+            const index = parentNode.findIndex(
+                (item) => item.key === node.key
+            )!;
+            this.data.splice(index, 1);
+            this.selectedKeys = this.selectedKeys.filter(
+                (key) => key !== node.key
+            );
+            this.expandedKeys = this.expandedKeys.filter(
+                (key) => key !== node.key
+            );
+        },
+    },
+});
 
 function createData(level = 4, baseKey = ""): NotesTreeNode[] | undefined {
     if (!level) return undefined;
-    return Array(6 - level).fill('').map((_, index) => {
-        const key = `${baseKey}${level}${index}`;
-        const title = createLabel(level);
-        const isLeaf = level === 1;
-        const parentKeys = breakdown(baseKey);
-        const children = !isLeaf ? createData(level - 1, key) : undefined;
-        const content = isLeaf ? {} : undefined;
-        return {
-            title,
-            key,
-            isLeaf,
-            children,
-            parentKeys,
-            content,
-        };
-    });
+    return Array(6 - level)
+        .fill("")
+        .map((_, index) => {
+            const key = `${baseKey}${level}${index}`;
+            const title = createLabel(level);
+            const isLeaf = level === 1;
+            const parentKeys = breakdown(baseKey);
+            const children = !isLeaf ? createData(level - 1, key) : undefined;
+            const content = isLeaf ? {} : undefined;
+            return {
+                title,
+                key,
+                isLeaf,
+                children,
+                parentKeys,
+                content,
+            };
+        });
 }
 
 function breakdown(key: string): string[] {
     let res = [] as string[];
     for (let i = 0; i < key.length; i += 2) {
-        res.push(key.slice(0, i + 2))
+        res.push(key.slice(0, i + 2));
     }
     return res;
 }
-
 
 function createLabel(level: number): string {
     if (level === 4) return "道生一";
