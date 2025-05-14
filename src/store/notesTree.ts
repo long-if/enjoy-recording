@@ -1,10 +1,12 @@
+import { has } from "lodash-es";
+import { Hash } from "lucide-vue-next";
 import { deleteNode } from "node_modules/@tiptap/core/dist/commands";
 import { defineStore } from "pinia";
 
 export const useNotesTreeStore = defineStore("notesTree", {
     state: () => ({
         data: [] as NotesTreeNode[],
-        level: 4,
+        hash: new Map<string, NotesTreeNode>(),
         selectedKeys: [] as string[],
         expandedKeys: [] as string[],
     }),
@@ -13,6 +15,7 @@ export const useNotesTreeStore = defineStore("notesTree", {
             let res = [] as NotesTreeNode[];
             function traverse(node: NotesTreeNode) {
                 res.push(node);
+                state.hash.set(node.key as string, node);
                 if (node.children) {
                     node.children.forEach(traverse);
                 }
@@ -89,7 +92,7 @@ export const useNotesTreeStore = defineStore("notesTree", {
             return newNoteGroupNode;
         },
         deleteNode(node: NotesTreeNode) {
-            function findParentNode(
+            function findSiblings(
                 key: string,
                 nodes: NotesTreeNode[]
             ): NotesTreeNode[] | undefined {
@@ -98,7 +101,7 @@ export const useNotesTreeStore = defineStore("notesTree", {
                         return nodes;
                     }
                     if (node.children && node.children.length) {
-                        const found = findParentNode(key, node.children);
+                        const found = findSiblings(key, node.children);
                         if (found) {
                             return found;
                         }
@@ -106,11 +109,11 @@ export const useNotesTreeStore = defineStore("notesTree", {
                 }
                 return undefined;
             }
-            const parentNode = findParentNode(node.key as string, this.data)!;
-            const index = parentNode.findIndex(
+            let siblings = findSiblings(node.key as string, this.data)!;
+            const index = siblings.findIndex(
                 (item) => item.key === node.key
             )!;
-            this.data.splice(index, 1);
+            siblings.splice(index, 1);
             this.selectedKeys = this.selectedKeys.filter(
                 (key) => key !== node.key
             );

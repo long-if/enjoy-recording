@@ -40,7 +40,7 @@ import { useNotesTreeStore } from "@/store/notesTree";
 import EventEmitter from "@/lib/EventEmitter";
 const notesTabsStore = useNotesTabsStore();
 const notesTreeStore = useNotesTreeStore();
-const { data, selectedKeys, expandedKeys } = storeToRefs(notesTreeStore);
+const { data, hash, selectedKeys, expandedKeys } = storeToRefs(notesTreeStore);
 const { openedNotes, notesKeys, activeNoteName } = storeToRefs(notesTabsStore);
 
 const leftBarVisibility = ref(true);
@@ -107,9 +107,14 @@ const syncNote = async (noteData: { key: string; nodeData: object }) => {
             key: noteData.key,
             nodeData: noteData.nodeData,
         });
-        let option = openedNotes.value.find(
-            (node) => node.key === noteData.key
-        )!;
+        let option = null;
+        if (hash.value.has(noteData.key)) {
+            option = hash.value.get(noteData.key)!;
+        } else {
+            option = openedNotes.value.find(
+                (node) => node.key === noteData.key
+            )!;
+        }
         option = Object.assign(option, response.data.node);
         console.log("同步单个笔记数据成功", response.data);
     } catch (error) {

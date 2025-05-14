@@ -5,6 +5,7 @@ declare global {
     interface NotesTreeNode extends TreeOption {
         title?: string;
         content?: JSONContent;
+        children?: NotesTreeNode[];
         parentKeys?: string[];
         version?: string;
         lastModified?: string;

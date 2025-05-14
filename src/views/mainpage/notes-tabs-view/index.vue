@@ -44,12 +44,17 @@ import { version } from "vue";
 const notesTabsStore = useNotesTabsStore();
 const { openedNotes, activeNoteName, notesKeys } = storeToRefs(notesTabsStore);
 const notesTreeStore = useNotesTreeStore();
-const { selectedKeys, expandedKeys } = storeToRefs(notesTreeStore);
+const { hash, selectedKeys, expandedKeys } = storeToRefs(notesTreeStore);
 const { getNotes, getNoteByKey, updateNotes } = useNoteApi();
 
 function tabChangeHandler(targetName: TabPaneName) {
     selectedKeys.value = [targetName as string];
-    let option = openedNotes.value.find((node) => node.key === targetName)!;
+    let option = null;
+    if (hash.value.has(targetName as string)) {
+        option = hash.value.get(targetName as string)!;
+    } else {
+        option = openedNotes.value.find((node) => node.key === targetName)!;
+    }
     (async function () {
         try {
             const response = await getNoteByKey({ key: targetName as string });

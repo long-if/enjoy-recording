@@ -73,7 +73,7 @@ import type {
     NTree,
     DropdownOption,
 } from "naive-ui";
-import { NInput, useMessage } from "naive-ui";
+import { NInput, useMessage, darkTheme } from "naive-ui";
 import {
     Afferent,
     Aiming,
@@ -93,8 +93,9 @@ import EventEmitter from "@/lib/EventEmitter";
 import { useNotesTreeStore } from "@/store/notesTree";
 import { useNotesTabsStore } from "@/store/notesTabs";
 import { Folder } from "lucide-vue-next";
+import { Key } from "naive-ui/es/tree/src/interface";
 const notesTreeStore = useNotesTreeStore();
-const { data, selectedKeys, expandedKeys } = storeToRefs(notesTreeStore);
+const { data, hash, selectedKeys, expandedKeys } = storeToRefs(notesTreeStore);
 const notesTabsStore = useNotesTabsStore();
 const { openedNotes, notesKeys, activeNoteName } = storeToRefs(notesTabsStore);
 const { getNotes, getNoteByKey, updateNotes } = useNoteApi();
@@ -272,11 +273,13 @@ defineExpose({
 function addNote(parent: NotesTreeNode | null) {
     const newNode = notesTreeStore.addNote(parent);
     notesTabsStore.addTab(newNode);
+    hash.value.set(newNode.key! as string, newNode);
     EventEmitter.emit("updateNotesTree");
 }
 
 function addNotesGroup(parent: NotesTreeNode | null) {
     const newNode = notesTreeStore.addNotesGroup(parent);
+    hash.value.set(newNode.key! as string, newNode);
     selectedOptionFromDropDown.value = newNode;
     // 进入编辑模式
     editingKey.value = newNode.key as string;
@@ -292,11 +295,16 @@ function renderIcon(icon: Component) {
 }
 
 function locate() {
-    const option = notesTreeStore.allNodes.find(
-        (node) => node.key === selectedKeys.value[0]
-    );
+    let option = null;
+    if (hash.value.has(activeNoteName.value)) {
+        option = hash.value.get(activeNoteName.value)!;
+    } else {
+        option = notesTreeStore.allNodes.find(
+            (node) => node.key === activeNoteName.value
+        )!;
+    }
     if (option) {
-        expandedKeys.value.push(...option?.parentKeys!);
+        expandedKeys.value.push(...option.parentKeys!);
         emit("locateNote", option);
     }
 }
@@ -393,7 +401,6 @@ const override: TreeOverrideNodeClickBehavior = async ({ option }) => {
         return "toggleExpand";
     }
     if (option.isLeaf && option.key !== editingKey.value) {
-        // let noteTab = notesTreeStore.allNodes.find((node) => node.key === option.key)!;
         try {
             const response = await getNoteByKey({ key: option.key! as string });
             console.log("获取单个笔记数据成功", response.data);
@@ -420,22 +427,6 @@ function addTabs(option: NotesTreeNode) {
     selectedKeys.value = [option.key! as string];
 }
 
-function findSiblingsAndIndex(
-    node: TreeOption,
-    nodes?: TreeOption[]
-): [TreeOption[], number] | [null, null] {
-    if (!nodes) return [null, null];
-    for (let i = 0; i < nodes.length; ++i) {
-        const siblingNode = nodes[i];
-        if (siblingNode.key === node.key) return [nodes, i];
-        const [siblings, index] = findSiblingsAndIndex(
-            node,
-            siblingNode.children
-        );
-        if (siblings && index !== null) return [siblings, index];
-    }
-    return [null, null];
-}
 
 function handleExpandedKeysChange(
     currentExpandedKeys: string[],
@@ -447,36 +438,79 @@ function handleExpandedKeysChange(
 ) {
     expandedKeys.value = currentExpandedKeys;
 }
-// BUG 拖拽后parentKeys未更新
-function handleDrop({ node, dragNode, dropPosition }: TreeDropInfo) {
-    const [dragNodeSiblings, dragNodeIndex] = findSiblingsAndIndex(
-        dragNode,
-        data.value
-    );
+
+function findSiblingsAndIndex(
+    node: NotesTreeNode
+): [NotesTreeNode[] | null, number | null] {
+    let nodeDirctParent = null,
+        nodeSiblings = null,
+        nodeIndex = null;
+    if (node.parentKeys?.length) {
+        const nodeDirctParentKey = node.parentKeys[node.parentKeys.length - 1];
+        if (hash.value.has(nodeDirctParentKey)) {
+            nodeDirctParent = hash.value.get(nodeDirctParentKey)!;
+        } else {
+            nodeDirctParent = notesTreeStore.allNodes.find(
+                (node) => node.key === nodeDirctParentKey
+            )!;
+        }
+        nodeSiblings = nodeDirctParent.children!;
+        nodeIndex = nodeSiblings.findIndex((item) => item.key === node.key);
+    } else {
+        nodeSiblings = data.value;
+        nodeIndex = nodeSiblings.findIndex((item) => item.key === node.key);
+    }
+    return [nodeSiblings, nodeIndex];
+}
+
+function handleDrop({
+    node,
+    dragNode,
+    dropPosition,
+}: TreeDropInfo & { node: NotesTreeNode; dragNode: NotesTreeNode }) {
+    const [dragNodeSiblings, dragNodeIndex] = findSiblingsAndIndex(dragNode);
     if (dragNodeSiblings === null || dragNodeIndex === null) return;
+
+    // 从原位置移除节点
     dragNodeSiblings.splice(dragNodeIndex, 1);
+
+    // 更新节点及其所有子节点的parentKeys
+    const updateParentKeys = (node: NotesTreeNode, newParentKeys: string[]) => {
+        node.parentKeys = newParentKeys;
+        if (node.children) {
+            node.children.forEach((child) => {
+                updateParentKeys(child, [
+                    ...newParentKeys,
+                    node.key! as string,
+                ]);
+            });
+        }
+    };
+
     if (dropPosition === "inside") {
         if (node.children) {
             node.children.unshift(dragNode);
         } else {
             node.children = [dragNode];
         }
+        // 更新被拖拽节点及其所有子节点的parentKeys
+        const newParentKeys = [...(node.parentKeys || []), node.key! as string];
+        updateParentKeys(dragNode, newParentKeys);
     } else if (dropPosition === "before") {
-        const [nodeSiblings, nodeIndex] = findSiblingsAndIndex(
-            node,
-            data.value
-        );
+        const [nodeSiblings, nodeIndex] = findSiblingsAndIndex(node);
         if (nodeSiblings === null || nodeIndex === null) return;
         nodeSiblings.splice(nodeIndex, 0, dragNode);
+        // 更新被拖拽节点及其所有子节点的parentKeys
+        updateParentKeys(dragNode, [...(node.parentKeys || [])]);
     } else if (dropPosition === "after") {
-        const [nodeSiblings, nodeIndex] = findSiblingsAndIndex(
-            node,
-            data.value
-        );
+        const [nodeSiblings, nodeIndex] = findSiblingsAndIndex(node);
         if (nodeSiblings === null || nodeIndex === null) return;
         nodeSiblings.splice(nodeIndex + 1, 0, dragNode);
+        // 更新被拖拽节点及其所有子节点的parentKeys
+        updateParentKeys(dragNode, [...(node.parentKeys || [])]);
     }
-    data.value = Array.from(data.value);
+    // data.value = Array.from(data.value);
+    EventEmitter.emit("updateNotesTree");
 }
 </script>
 
