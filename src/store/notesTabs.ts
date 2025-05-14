@@ -20,11 +20,11 @@ export const useNotesTabsStore = defineStore("notesTabs", {
             this.activeNoteName = node.key as string;
             notesTreeStore.selectedKeys = [node.key as string];
         },
-        deleteTab(node: NotesTreeNode) {
+        deleteTab(key: string) {
             this.openedNotes = this.openedNotes.filter(
-                (item) => item.key !== node.key
+                (item) => item.key !== key
             );
-            this.notesKeys.delete(node.key as string);
+            this.notesKeys.delete(key);
         },
     },
 });

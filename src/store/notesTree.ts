@@ -91,34 +91,18 @@ export const useNotesTreeStore = defineStore("notesTree", {
             }
             return newNoteGroupNode;
         },
-        deleteNode(node: NotesTreeNode) {
-            function findSiblings(
-                key: string,
-                nodes: NotesTreeNode[]
-            ): NotesTreeNode[] | undefined {
-                for (const node of nodes) {
-                    if (node.key === key) {
-                        return nodes;
-                    }
-                    if (node.children && node.children.length) {
-                        const found = findSiblings(key, node.children);
-                        if (found) {
-                            return found;
-                        }
-                    }
-                }
-                return undefined;
-            }
-            let siblings = findSiblings(node.key as string, this.data)!;
-            const index = siblings.findIndex(
-                (item) => item.key === node.key
-            )!;
+        deleteNode(
+            deleteKey: string,
+            siblings: NotesTreeNode[],
+            index: number
+        ) {
             siblings.splice(index, 1);
+            this.hash.delete(deleteKey);
             this.selectedKeys = this.selectedKeys.filter(
-                (key) => key !== node.key
+                (key) => key !== deleteKey
             );
             this.expandedKeys = this.expandedKeys.filter(
-                (key) => key !== node.key
+                (key) => key !== deleteKey
             );
         },
     },

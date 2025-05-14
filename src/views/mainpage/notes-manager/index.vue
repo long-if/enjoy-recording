@@ -159,8 +159,9 @@ const notesOptions = ref([
             onClick: () => {
                 const option = selectedOptionFromDropDown.value;
                 if (option) {
-                    notesTreeStore.deleteNode(option);
-                    notesTabsStore.deleteTab(option);
+                    let [siblings, index] = findSiblingsAndIndex(option);
+                    notesTreeStore.deleteNode(option.key as string, siblings, index);
+                    notesTabsStore.deleteTab(option.key as string);
                     EventEmitter.emit("updateNotesTree");
                 }
             },
@@ -251,8 +252,9 @@ const notesGroupOptions = ref([
             onClick: () => {
                 const option = selectedOptionFromDropDown.value;
                 if (option) {
-                    notesTreeStore.deleteNode(option);
-                    notesTabsStore.deleteTab(option);
+                    let [siblings, index] = findSiblingsAndIndex(option);
+                    notesTreeStore.deleteNode(option.key as string, siblings, index);
+                    notesTabsStore.deleteTab(option.key as string);
                     EventEmitter.emit("updateNotesTree");
                 }
             },
@@ -427,7 +429,6 @@ function addTabs(option: NotesTreeNode) {
     selectedKeys.value = [option.key! as string];
 }
 
-
 function handleExpandedKeysChange(
     currentExpandedKeys: string[],
     _option: Array<TreeOption | null>,
@@ -441,7 +442,7 @@ function handleExpandedKeysChange(
 
 function findSiblingsAndIndex(
     node: NotesTreeNode
-): [NotesTreeNode[] | null, number | null] {
+): [NotesTreeNode[], number] {
     let nodeDirctParent = null,
         nodeSiblings = null,
         nodeIndex = null;
