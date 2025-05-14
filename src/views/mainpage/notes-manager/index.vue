@@ -99,7 +99,6 @@ const { data, hash, selectedKeys, expandedKeys } = storeToRefs(notesTreeStore);
 const notesTabsStore = useNotesTabsStore();
 const { openedNotes, notesKeys, activeNoteName } = storeToRefs(notesTabsStore);
 const { getNotes, getNoteByKey, updateNotes } = useNoteApi();
-const editInput = useTemplateRef<HTMLElement>("editInput");
 const tree = useTemplateRef("tree");
 const message = useMessage();
 const showDropdown = ref(false);
@@ -160,7 +159,11 @@ const notesOptions = ref([
                 const option = selectedOptionFromDropDown.value;
                 if (option) {
                     let [siblings, index] = findSiblingsAndIndex(option);
-                    notesTreeStore.deleteNode(option.key as string, siblings, index);
+                    notesTreeStore.deleteNode(
+                        option.key as string,
+                        siblings,
+                        index
+                    );
                     notesTabsStore.deleteTab(option.key as string);
                     EventEmitter.emit("updateNotesTree");
                 }
@@ -253,7 +256,11 @@ const notesGroupOptions = ref([
                 const option = selectedOptionFromDropDown.value;
                 if (option) {
                     let [siblings, index] = findSiblingsAndIndex(option);
-                    notesTreeStore.deleteNode(option.key as string, siblings, index);
+                    notesTreeStore.deleteNode(
+                        option.key as string,
+                        siblings,
+                        index
+                    );
                     notesTabsStore.deleteTab(option.key as string);
                     EventEmitter.emit("updateNotesTree");
                 }
@@ -339,6 +346,7 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
     };
 };
 
+const inputRef = ref<HTMLInputElement | null>(null);
 function renderLabel({ option }: { option: TreeOption }) {
     const handleKeyUp = (e: KeyboardEvent) => {
         if (e.key === "Enter") saveEdit();
@@ -350,9 +358,15 @@ function renderLabel({ option }: { option: TreeOption }) {
     };
     if (option.key === editingKey.value) {
         option.disabled = true;
+        nextTick(() => {
+            const input = inputRef.value;
+            if (input) {
+                input.focus();
+            }
+        });
         return h(NInput, {
             autofocus: true,
-            ref: "editInput",
+            ref: inputRef,
             size: "tiny",
             value: editValue.value,
             onUpdateValue: (v) => (editValue.value = v),
@@ -440,9 +454,7 @@ function handleExpandedKeysChange(
     expandedKeys.value = currentExpandedKeys;
 }
 
-function findSiblingsAndIndex(
-    node: NotesTreeNode
-): [NotesTreeNode[], number] {
+function findSiblingsAndIndex(node: NotesTreeNode): [NotesTreeNode[], number] {
     let nodeDirctParent = null,
         nodeSiblings = null,
         nodeIndex = null;

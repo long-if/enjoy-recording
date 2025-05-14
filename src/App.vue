@@ -19,23 +19,24 @@ const osTheme = useOsTheme();
 const theme = computed(() => {
     return osTheme.value === "dark" ? darkTheme : null;
 });
-import { NConfigProvider, GlobalThemeOverrides } from 'naive-ui'
+import { NConfigProvider, GlobalThemeOverrides } from "naive-ui";
 
-  const themeOverrides: GlobalThemeOverrides = {
+const themeOverrides: GlobalThemeOverrides = {
     common: {
-      primaryColor: '#FF6600',
-      infoColor: '#FF6600',
-      infoColorHover: '#ffa571',
-      infoColorPressed: '#a34405',
-      infoColorSuppl: '#FF6600',
+        primaryColor: "#FF6600",
+        infoColor: "#FF6600",
+        infoColorHover: "#ffa571",
+        infoColorPressed: "#a34405",
+        infoColorSuppl: "#FF6600",
     },
     Input: {
-      fontSizeTiny:"14px",
-      border: "1px solid #ffa571",
-      borderHover: "1px solid #FF6600",
-      borderFocus: "1px solid #FF6600",
-    }
-  }
+        fontSizeTiny: "14px",
+        border: "1px solid #ffa571",
+        borderHover: "1px solid #FF6600",
+        borderFocus: "1px solid #FF6600",
+        boxShadowFocus: "0 0 0 2px rgba(255,102,0,0.2)",
+    },
+};
 </script>
 
 <style lang="scss"></style>
