@@ -252,6 +252,12 @@ EventEmitter.on("updateNoteTitle", (keyToUpdate: string, newTitle: string) => {
     }
 });
 
+EventEmitter.on("setEditable", (editable: boolean) => {
+    if (activeNoteName.value === noteKey) {
+        editor.value?.setEditable(editable, false);
+    }
+}); 
+
 function insertImage(currentEditor: Editor, files: File[]) {
     files.forEach((file) => {
         const fileReader = new FileReader();

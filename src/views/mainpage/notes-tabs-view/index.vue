@@ -30,7 +30,6 @@
             </EmptyState>
         </template>
     </div>
-    <!-- TODO 侧边栏功能添加适配 -->
     <n-drawer
         v-if="Capacitor.isNativePlatform()"
         v-model:show="drawerVisibiliy"

@@ -1,6 +1,6 @@
 <template>
+    <!-- BUG FeatureBar的滚动问题 -->
     <div class="feature-bar">
-        <!-- :style="{opacity: Capacitor.isNativePlatform() ? 1 : 0, cursor: Capacitor.isNativePlatform() ? 'pointer' : 'auto'}" -->
         <div
             class="icon-box show-drawer"
             v-if="Capacitor.isNativePlatform()"
@@ -30,15 +30,14 @@
                 <use xlink:href="#icon-xing"></use>
             </svg>
         </div>
-        <!-- TODO 编辑模式阅读模式 -->
         <div
             class="icon-box"
             v-show="openedNotes.length > 0"
-            @click="editable = !editable">
+            @click="editable = !editable;EventEmitter.emit('setEditable', editable)">
             <svg class="icon" aria-hidden="true">
                 <use
                     :xlink:href="
-                        editable ? '#icon-bianji1' : '#icon-yuedu'
+                        !editable ? '#icon-bianji1' : '#icon-yuedu'
                     "></use>
             </svg>
         </div>
@@ -48,6 +47,7 @@
 <script setup lang="ts">
 import { Capacitor } from "@capacitor/core";
 import { WritingFluently, Edit } from "@icon-park/vue-next";
+import EventEmitter from "@/lib/EventEmitter";
 import { useNotesTabsStore } from "@/store/notesTabs";
 const notesTabsStore = useNotesTabsStore();
 const { openedNotes, activeNoteName, openedNotesKeys } =

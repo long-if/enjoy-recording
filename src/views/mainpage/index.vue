@@ -1,5 +1,4 @@
 <template>
-    <!-- TODO 移动端适配 -->
     <div class="layout" :class="openedNotes.length === 0 ? 'gray' : 'white'">
         <LeftSiderbar
             v-if="!Capacitor.isNativePlatform()"
