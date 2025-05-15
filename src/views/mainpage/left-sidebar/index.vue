@@ -1,6 +1,6 @@
 <template>
     <div class="left-sidebar">
-        <img src="@/assets/logo.png" alt="" />
+        <img src="@/assets/logo.png" alt="logo" />
         <div class="icon-box" @click="emit('toggle')">
             <svg class="icon" aria-hidden="true">
                 <use
@@ -14,10 +14,14 @@
         <el-divider />
         <!-- TODO 搜索功能实现 -->
         <div class="icon-box">
-                <svg class="icon" aria-hidden="true">
-                    <use xlink:href="#icon-sousuo"></use>
-                </svg>
-            </div>
+            <notebook-one theme="outline" size="18" fill="#333" />
+        </div>
+        <el-divider />
+        <div class="icon-box">
+            <svg class="icon" aria-hidden="true">
+                <use xlink:href="#icon-sousuo"></use>
+            </svg>
+        </div>
         <div class="icon-box">
             <svg class="icon" aria-hidden="true">
                 <use xlink:href="#icon-lishi"></use>
@@ -37,18 +41,6 @@
         <div class="icon-box">
             <svg class="icon" aria-hidden="true">
                 <use xlink:href="#icon-tongji1"></use>
-            </svg>
-        </div>
-
-        <div class="icon-box">
-            <svg class="icon" aria-hidden="true">
-                <use xlink:href="#icon-shangchuan"></use>
-            </svg>
-        </div>
-
-        <div class="icon-box">
-            <svg class="icon" aria-hidden="true">
-                <use xlink:href="#icon-yuyin"></use>
             </svg>
         </div>
 
@@ -73,6 +65,7 @@
 </template>
 
 <script setup>
+import { NotebookOne } from "@icon-park/vue-next";
 const emit = defineEmits(["toggle"]);
 const { leftBarVisibility } = defineProps(["leftBarVisibility"]);
 </script>
@@ -82,6 +75,7 @@ const { leftBarVisibility } = defineProps(["leftBarVisibility"]);
     --box-size: 32px;
     --size: 20px;
     width: var(--leftbar-width);
+    height: 100vh;
     background-color: white;
     display: flex;
     padding-top: 0.5rem;
@@ -93,6 +87,8 @@ const { leftBarVisibility } = defineProps(["leftBarVisibility"]);
     flex: 0 0 auto;
     border-right: 1px solid var(--gray-3);
     user-select: none;
+    position: relative;
+    top: -8px;
     z-index: 10;
 
     img {

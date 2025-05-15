@@ -36,6 +36,9 @@ const themeOverrides: GlobalThemeOverrides = {
         borderFocus: "1px solid #FF6600",
         boxShadowFocus: "0 0 0 2px rgba(255,102,0,0.2)",
     },
+    Drawer: {
+        borderRadius: "16px",
+    }
 };
 </script>
 

@@ -5,7 +5,7 @@ import { add } from "lodash-es";
 export const useNotesTabsStore = defineStore("notesTabs", {
     state: () => ({
         openedNotes: [] as NotesTreeNode[],
-        notesKeys: new Set<string>(),
+        openedNotesKeys: new Set<string>(),
         activeNoteName: "",
     }),
     actions: {
@@ -16,7 +16,7 @@ export const useNotesTabsStore = defineStore("notesTabs", {
         addTab(node: NotesTreeNode) {
             const notesTreeStore = useNotesTreeStore();
             this.openedNotes.push(node);
-            this.notesKeys.add(node.key as string);
+            this.openedNotesKeys.add(node.key as string);
             this.activeNoteName = node.key as string;
             notesTreeStore.selectedKeys = [node.key as string];
         },
@@ -24,7 +24,14 @@ export const useNotesTabsStore = defineStore("notesTabs", {
             this.openedNotes = this.openedNotes.filter(
                 (item) => item.key !== key
             );
-            this.notesKeys.delete(key);
+            this.openedNotesKeys.delete(key);
         },
+        clearTabs() {
+            this.openedNotes = [];
+            this.openedNotesKeys.clear();
+            this.activeNoteName = "";
+            const notesTreeStore = useNotesTreeStore();
+            notesTreeStore.selectedKeys = [];
+        }
     },
 });

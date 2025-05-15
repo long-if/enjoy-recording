@@ -1,7 +1,6 @@
 <template>
     <div class="main">
         <template v-if="openedNotes.length > 0">
-            <!-- TODO 关闭所有标签页功能 -->
             <el-tabs
                 v-model="activeNoteName"
                 type="card"
@@ -15,6 +14,7 @@
                     :name="note.key"
                     :key="note.key">
                     <el-scrollbar class="note-view">
+                        <FeatureaBar v-model="drawerVisibiliy" />
                         <Editor
                             v-model:content="note.content!"
                             v-model:title="note.title!"
@@ -25,15 +25,29 @@
             </el-tabs>
         </template>
         <template v-else>
-            <EmptyState />
+            <EmptyState @open-notes-manager="drawerVisibiliy = true">
+                <FeatureaBar v-model="drawerVisibiliy" />
+            </EmptyState>
         </template>
     </div>
+    <!-- TODO 侧边栏功能添加适配 -->
+    <n-drawer
+        v-if="Capacitor.isNativePlatform()"
+        v-model:show="drawerVisibiliy"
+        :width="300"
+        :auto-focus="false"
+        placement="left">
+        <slot name="mobileDrawer"></slot>
+    </n-drawer>
 </template>
 
 <script setup lang="ts">
+import { Capacitor } from "@capacitor/core";
 import { useModal } from "naive-ui";
 import Editor from "@/views/editor/index.vue";
 import EmptyState from "./EmptyState.vue";
+import FeatureaBar from "./FeatureaBar.vue";
+import NotesManager from "@/views/mainpage/notes-manager/index.vue";
 import type { TabPaneName } from "element-plus";
 import EventEmitter from "@/lib/EventEmitter";
 import { useNotesTreeStore } from "@/store/notesTree";
@@ -42,10 +56,13 @@ import { JSONContent } from "@tiptap/core";
 import { useNoteApi } from "@/api/note";
 import { version } from "vue";
 const notesTabsStore = useNotesTabsStore();
-const { openedNotes, activeNoteName, notesKeys } = storeToRefs(notesTabsStore);
+const { openedNotes, activeNoteName, openedNotesKeys } =
+    storeToRefs(notesTabsStore);
 const notesTreeStore = useNotesTreeStore();
 const { hash, selectedKeys, expandedKeys } = storeToRefs(notesTreeStore);
 const { getNotes, getNoteByKey, updateNotes } = useNoteApi();
+
+const drawerVisibiliy = ref(false);
 
 function tabChangeHandler(targetName: TabPaneName) {
     selectedKeys.value = [targetName as string];
@@ -94,7 +111,7 @@ const handleTabsEdit = (
             selectedKeys.value = [activeName as string];
         }
         openedNotes.value = tabs.filter((tab) => tab.key !== targetName);
-        notesKeys.value.delete(targetName as string);
+        openedNotesKeys.value.delete(targetName as string);
     }
 };
 </script>
@@ -132,6 +149,10 @@ const handleTabsEdit = (
     user-select: none;
     app-region: drag;
 
+    @media screen and (max-width: 768px) {
+        margin-right: 0;
+    }
+
     .el-tabs__nav-wrap.is-top {
         flex-grow: 0;
         app-region: no-drag;
@@ -143,5 +164,15 @@ const handleTabsEdit = (
 }
 .el-tabs__content {
     border-top: 1px solid var(--el-border-color-light);
+}
+
+.n-drawer {
+    .n-drawer-content-wrapper {
+        border-radius: 8px;
+        padding-left: 0;
+        padding-right: 0;
+        overflow: hidden;
+        padding-top: var(--status-bar-height);
+    }
 }
 </style>

@@ -2,11 +2,12 @@
     <!-- TODO 移动端适配 -->
     <div class="layout" :class="openedNotes.length === 0 ? 'gray' : 'white'">
         <LeftSiderbar
+            v-if="!Capacitor.isNativePlatform()"
             :leftBarVisibility="leftBarVisibility"
             @toggle="leftBarVisibility = !leftBarVisibility" />
         <Splitpanes class="splitpanes" @resized="storePaneSize">
             <pane
-                v-if="leftBarVisibility"
+                v-if="leftBarVisibility && !Capacitor.isNativePlatform()"
                 class="pane1"
                 max-size="40"
                 :size="paneSize">
@@ -20,14 +21,24 @@
                 min-size="50"
                 max-size="100"
                 :size="100 - paneSize">
-                <NotesTabsView class="main" />
+                <NotesTabsView class="main">
+                    <template #mobileDrawer v-if="Capacitor.isNativePlatform()">
+                        <TopSection />
+                        <NotesManager
+                            class="notes-group-list"
+                            @locate-note="scrollTo"
+                            ref="notesGroupList" />
+                    </template>
+                </NotesTabsView>
             </pane>
         </Splitpanes>
     </div>
 </template>
 
 <script setup lang="ts">
+import { Capacitor } from "@capacitor/core";
 import LeftSiderbar from "@/views/mainpage/left-sidebar/index.vue";
+import TopSection from "@/views/mainpage/top-section/index.vue";
 import NotesManager from "@/views/mainpage/notes-manager/index.vue";
 import NotesTabsView from "@/views/mainpage/notes-tabs-view/index.vue";
 import { useModal, useDialog } from "naive-ui";
@@ -41,11 +52,12 @@ import EventEmitter from "@/lib/EventEmitter";
 const notesTabsStore = useNotesTabsStore();
 const notesTreeStore = useNotesTreeStore();
 const { data, hash, selectedKeys, expandedKeys } = storeToRefs(notesTreeStore);
-const { openedNotes, notesKeys, activeNoteName } = storeToRefs(notesTabsStore);
+const { openedNotes, openedNotesKeys, activeNoteName } =
+    storeToRefs(notesTabsStore);
 
 const leftBarVisibility = ref(true);
 const notesManager = useTemplateRef("notesGroupList");
-const paneSize = useStorage("paneSize", 20);
+const paneSize = useStorage("paneSize", 25);
 const { getNotes, getNoteByKey, updateNotes, updateNoteByKey } = useNoteApi();
 // const modal = useModal();
 let dialog = useDialog();
@@ -60,7 +72,7 @@ onMounted(async () => {
         console.error("Error fetching notes:", error);
     }
 
-    // TODO : 笔记树结构多端同步实现
+    // TODO 笔记树结构多端同步
     // async function checkLatest() {
     //     try {
     //         const response = await getNotes();
@@ -161,6 +173,10 @@ EventEmitter.on("conflict", () => {
     display: flex;
     flex-direction: row;
 
+    @media screen and (max-width: 768px) {
+        margin-top: var(--status-bar-height);
+    }
+
     &.gray {
         background-color: #f5f5f5;
     }
@@ -177,11 +193,15 @@ EventEmitter.on("conflict", () => {
         flex: 1 0;
 
         .pane1 {
-            min-width: 250px;
+            min-width: 280px;
         }
 
         .pane2 {
             min-width: 500px;
+
+            @media screen and (max-width: 768px) {
+                min-width: unset;
+            }
         }
     }
 }

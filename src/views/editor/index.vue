@@ -9,7 +9,7 @@
             spellcheck="false" />
         <div class="sidebar" v-if="!Capacitor.isNativePlatform()">
             <div class="sidebar-options">
-                <div class="label-large">Table of contents</div>
+                <div class="label-large">大纲</div>
                 <div class="table-of-contents">
                     <template v-if="editor">
                         <ToC :editor="editor" :items="items" />
@@ -72,7 +72,7 @@ import { useNotesTabsStore } from "@/store/notesTabs";
 import { useNoteApi } from "@/api/note";
 import { OptionIcon } from "lucide-vue-next";
 const notesTabsStore = useNotesTabsStore();
-const { openedNotes, activeNoteName, notesKeys } = storeToRefs(notesTabsStore);
+const { openedNotes, activeNoteName, openedNotesKeys } = storeToRefs(notesTabsStore);
 const notesTreeStore = useNotesTreeStore();
 const { selectedKeys, expandedKeys } = storeToRefs(notesTreeStore);
 const { getNotes, getNoteByKey, updateNotes } = useNoteApi();

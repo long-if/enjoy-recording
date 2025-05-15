@@ -1,4 +1,5 @@
 <template>
+    <!-- TODO 登录状态保存 -->
     <div class="container">
         <div class="card">
             <div class="header">
@@ -23,7 +24,7 @@
                 </label>
                 <label for="password" class="password-icon">
                     <svg class="icon" aria-hidden="true">
-                        <use xlinkhref="#icon-mima"></use>
+                        <use xlink:href="#icon-mima"></use>
                     </svg>
                     <input
                         type="password"
@@ -195,7 +196,7 @@ async function handleLogin() {
                 .icon {
                     position: absolute;
                     top: 50%;
-                    transform: translateY(-50%);
+                    transform: translateY(-55%);
                     left: 0.5em;
                 }
 

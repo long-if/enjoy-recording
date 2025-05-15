@@ -29,6 +29,11 @@
             <div class="icon-box">
                 <afferent class="icon" theme="outline" size="18" fill="#333" />
             </div>
+            <div class="icon-box clear-tabs" @click="notesTabsStore.clearTabs">
+                <svg class="icon" aria-hidden="true">
+                    <use xlink:href="#icon-guanbiquanbubiaoqianye1"></use>
+                </svg>
+            </div>
         </div>
         <div class="notes">
             <n-tree
@@ -65,6 +70,7 @@
 </template>
 
 <script setup lang="ts">
+import { Capacitor } from "@capacitor/core";
 import Icon from "./icon.vue";
 import type {
     TreeDropInfo,
@@ -74,6 +80,7 @@ import type {
     DropdownOption,
 } from "naive-ui";
 import { NInput, useMessage, darkTheme } from "naive-ui";
+import { JSONContent } from "@tiptap/core";
 import {
     Afferent,
     Aiming,
@@ -97,7 +104,8 @@ import { Key } from "naive-ui/es/tree/src/interface";
 const notesTreeStore = useNotesTreeStore();
 const { data, hash, selectedKeys, expandedKeys } = storeToRefs(notesTreeStore);
 const notesTabsStore = useNotesTabsStore();
-const { openedNotes, notesKeys, activeNoteName } = storeToRefs(notesTabsStore);
+const { openedNotes, openedNotesKeys, activeNoteName } =
+    storeToRefs(notesTabsStore);
 const { getNotes, getNoteByKey, updateNotes } = useNoteApi();
 const tree = useTemplateRef("tree");
 const message = useMessage();
@@ -213,6 +221,11 @@ const notesGroupOptions = ref([
         icon: renderIcon(MinusTheTop),
     },
     {
+        label: "导入",
+        key: "import",
+        icon: renderIcon(Afferent),
+    },
+    {
         label: "导出",
         key: "export",
         icon: renderIcon(Export),
@@ -285,6 +298,9 @@ function addNote(parent: NotesTreeNode | null) {
     hash.value.set(newNode.key! as string, newNode);
     EventEmitter.emit("updateNotesTree");
 }
+EventEmitter.on("addNote", (parent: NotesTreeNode | null) => {
+    addNote(parent);
+});
 
 function addNotesGroup(parent: NotesTreeNode | null) {
     const newNode = notesTreeStore.addNotesGroup(parent);
@@ -389,11 +405,36 @@ const saveEdit = () => {
     } else {
         selectedOptionFromDropDown.value!.title = editValue.value;
         if (selectedOptionFromDropDown.value!.isLeaf) {
-            EventEmitter.emit(
-                "updateNoteTitle",
-                selectedOptionFromDropDown.value!.key,
-                selectedOptionFromDropDown.value!.title
-            );
+            if (
+                openedNotesKeys.value.has(
+                    selectedOptionFromDropDown.value!.key! as string
+                )
+            ) {
+                EventEmitter.emit(
+                    "updateNoteTitle",
+                    selectedOptionFromDropDown.value!.key,
+                    selectedOptionFromDropDown.value!.title
+                );
+            } else {
+                const newContent = selectedOptionFromDropDown.value!.content;
+                const newTitle = selectedOptionFromDropDown.value!.title;
+                const titleNode = newContent?.content?.find(
+                    (node) => node?.type === "heading"
+                ) as JSONContent;
+                const titleContent = titleNode?.content;
+                if (titleContent) {
+                    titleContent[0].text = newTitle;
+                } else {
+                    titleNode.content = [
+                        {
+                            type: "text",
+                            text: newTitle,
+                        },
+                    ];
+                }
+                selectedOptionFromDropDown.value!.content = newContent;
+                EventEmitter.emit("updateNotesTree");
+            }
         }
         EventEmitter.emit("updateNotesTree");
     }
@@ -409,7 +450,16 @@ const handleClickoutside = () => {
     showDropdown.value = false;
 };
 
-const renderSwitcherIcon = () => h(NIcon, null, { default: () => h(Icon) });
+const renderSwitcherIcon = () =>
+    h(
+        NIcon,
+        {
+            size: Capacitor.isNativePlatform() ? 16 : 14,
+        },
+        {
+            default: () => h(Icon),
+        }
+    );
 
 // @ts-ignore
 const override: TreeOverrideNodeClickBehavior = async ({ option }) => {
@@ -431,14 +481,14 @@ const override: TreeOverrideNodeClickBehavior = async ({ option }) => {
 };
 
 function addTabs(option: NotesTreeNode) {
-    if (notesKeys.value.has(option.key! as string)) {
+    if (openedNotesKeys.value.has(option.key! as string)) {
         activeNoteName.value = option.key! as string;
         selectedKeys.value = [option.key! as string];
         EventEmitter.emit("updateNoteByFetch", option);
         return;
     }
     openedNotes.value.push(option);
-    notesKeys.value.add(option.key! as string);
+    openedNotesKeys.value.add(option.key! as string);
     activeNoteName.value = option.key! as string;
     selectedKeys.value = [option.key! as string];
 }
@@ -548,6 +598,10 @@ function handleDrop({
         column-gap: 8px;
         border-bottom: 1px solid var(--gray-3);
 
+        @media screen and (max-width: 768px) {
+            border-top: 1px solid var(--gray-3);
+        }
+
         .icon-box {
             width: var(--box-size);
             height: var(--box-size);
@@ -589,11 +643,34 @@ function handleDrop({
     padding-right: 10px;
     padding-top: 10px;
     padding-bottom: 1rem;
+
+    @media screen and (max-width: 768px) {
+        --n-font-size: 16px;
+        height: calc(
+            100vh - var(--top-height) - var(--status-bar-height) - 108px
+        );
+        padding-top: 4px;
+        padding-bottom: 0.5rem;
+    }
+
+    .v-vl {
+        --n-node-color-active: rgba(160, 85, 24, 0.1) !important;
+
+        @media screen and (max-width: 768px) {
+            --n-node-content-height: 30px !important;
+            --n-node-wrapper-padding: 4px 0 !important;
+            --n-node-border-radius: 4px !important;
+        }
+    }
+
+    .n-tree-node-switcher .n-tree-node-switcher__icon {
+        @media screen and (max-width: 768px) {
+            width: 16px !important;
+            height: 16px !important;
+        }
+    }
 }
 
-.v-vl {
-    --n-node-color-active: rgba(160, 85, 24, 0.1) !important;
-}
 .n-tree-node-content__text {
     white-space: nowrap;
     text-overflow: ellipsis;

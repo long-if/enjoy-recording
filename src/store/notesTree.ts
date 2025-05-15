@@ -30,15 +30,29 @@ export const useNotesTreeStore = defineStore("notesTree", {
             const key =
                 Date.now().toString(36) + Math.random().toString(36).slice(2);
             const isLeaf = true;
+            const initialContent = {
+                type: "doc",
+                content: [
+                    {
+                        type: "heading",
+                        content: [
+                            {
+                                type: "text",
+                                text: "",
+                            },
+                        ],
+                    },
+                ],
+            };
             if (!parent) {
                 const newNoteLeafNode = {
                     title,
                     key,
                     isLeaf,
                     parentKeys: [],
-                    content: {},
+                    content: initialContent,
                 };
-                this.data.push(newNoteLeafNode);
+                this.data.unshift(newNoteLeafNode);
                 return newNoteLeafNode;
             }
             const parentKeys = parent.parentKeys
@@ -49,7 +63,7 @@ export const useNotesTreeStore = defineStore("notesTree", {
                 key,
                 isLeaf,
                 parentKeys,
-                content: {},
+                content: initialContent,
             } as NotesTreeNode;
             if (parent.children) {
                 parent.children.unshift(newNoteLeafNode);
@@ -71,7 +85,7 @@ export const useNotesTreeStore = defineStore("notesTree", {
                     parentKeys: [],
                     children: [],
                 };
-                this.data.push(newNoteGroupNode);
+                this.data.unshift(newNoteGroupNode);
                 return newNoteGroupNode;
             }
             const parentKeys = parent.parentKeys
