@@ -64,6 +64,15 @@ let timer: NodeJS.Timeout;
 
 onMounted(async () => {
     try {
+        window.ipcRenderer.send("setTitleBarOverlay", {
+            color: "#ffffff",
+            symbolColor: "#fb6b3f",
+            height: 48,
+        });
+    } catch {
+        console.log("当前为非Electron环境");
+    }
+    try {
         const response = await getNotes();
         console.log("获取笔记数据成功", response.data);
         data.value = response.data.notes_tree;
@@ -177,7 +186,7 @@ EventEmitter.on("conflict", () => {
     }
 
     &.gray {
-        background-color: #f5f5f5;
+        background-color: #ffffff;
     }
 
     &.white {

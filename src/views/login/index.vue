@@ -10,7 +10,7 @@
                 <div class="label">—— Enjoying Recording ——</div>
             </div>
             <form class="form">
-                <label for="username" class="username-icon">
+                <label for="username" class="username">
                     <svg class="icon" aria-hidden="true">
                         <use xlink:href="#icon-zhanghao"></use>
                     </svg>
@@ -22,7 +22,7 @@
                         v-model="username"
                         required />
                 </label>
-                <label for="password" class="password-icon">
+                <label for="password" class="password">
                     <svg class="icon" aria-hidden="true">
                         <use xlink:href="#icon-mima"></use>
                     </svg>
@@ -35,6 +35,7 @@
                         v-model="password"
                         required />
                     <svg
+                        v-if="password"
                         class="icon eye"
                         aria-hidden="true"
                         @click="showHide"
@@ -42,27 +43,43 @@
                         <use :xlink:href="code"></use>
                     </svg>
                 </label>
+                <div class="forgot">忘记密码？</div>
                 <input
                     type="button"
                     class="login-button"
                     value="登录"
                     @click="handleLogin" />
-                <el-divider class="forgot" content-position="center"
-                    >忘记密码？</el-divider
-                >
+                <n-divider class="register" title-placement="center">
+                    <span>还没有账号？</span>
+                    <span class="colored">现在注册!</span>
+                </n-divider>
             </form>
         </div>
     </div>
 </template>
 
 <script setup>
+import { useMessage } from "naive-ui";
 import { useStorage } from "@vueuse/core";
 import { useLoginApi } from "@/api/login";
 const router = useRouter();
 const { login } = useLoginApi();
+const message = useMessage();
 const username = ref("");
 const password = ref("");
 
+onMounted(() => {
+    try {
+        window.ipcRenderer.send("setTitleBarOverlay", {
+            color: "#fe5723",
+            symbolColor: "#ffffff",
+            height: 48,
+        });
+    }
+    catch {
+        console.log('当前为非Electron环境')
+    }
+})
 // 密码显隐
 const input = useTemplateRef("passwordRef");
 const code = ref("#icon-a-Property1xianshi");
@@ -78,7 +95,7 @@ const showHide = () => {
 
 async function handleLogin() {
     if (username.value === "" || password.value === "") {
-        ElMessage.error("请输入账号和密码！");
+        message.error("请输入账号和密码！");
         return;
     }
     // 这里可以添加登录逻辑，比如调用API等
@@ -88,14 +105,14 @@ async function handleLogin() {
             username: username.value,
             password: password.value,
         });
-        ElMessage.success("登录成功！");
+        message.success("登录成功！");
         // 登录成功后可以存储token等信息
         console.log(response.data.token);
         const token = useStorage("token");
         token.value = response.data.token;
         router.push("/mainpage");
     } catch (error) {
-        ElMessage.error("登录失败，请检查账号和密码！");
+        message.error("登录失败，请检查账号和密码！");
         return;
     }
 }
@@ -107,7 +124,7 @@ async function handleLogin() {
     justify-content: center;
     align-items: center;
     height: 100%;
-    background: linear-gradient(to bottom, #fe5723, #f9fafb);
+    background: linear-gradient(to bottom, #fe5723 48px, #f9fafb);
 
     .card {
         width: 450px;
@@ -168,7 +185,8 @@ async function handleLogin() {
             border-radius: 1.5rem;
             display: flex;
             flex-flow: column nowrap;
-            justify-content: space-between;
+            justify-content: flex-start;
+            align-items: center;
 
             @media screen and (max-width: 768px) {
                 height: 300px;
@@ -176,17 +194,34 @@ async function handleLogin() {
             }
 
             label {
+                width: 100%;
                 height: auto;
                 position: relative;
+
+                &.username {
+                    margin-top: 0;
+                }
+
+                &.password {
+                    margin-top: 16px;
+                }
 
                 input {
                     width: 100%;
                     border: none;
                     outline: none;
-                    border-bottom: 1.8px solid #fe5723;
+                    border-bottom: 1.8px solid var(--theme-color);
                     height: 3rem;
                     line-height: 2em;
                     padding-left: 2em;
+                    font-size: 1rem;
+                    transition: all 400ms;
+
+                    // &:focus {
+                    //     border-radius: 8px;
+                    //     border: none;
+                    //     box-shadow: 0 0 10px var(--theme-color);
+                    // }
                 }
 
                 #password {
@@ -194,6 +229,7 @@ async function handleLogin() {
                 }
 
                 .icon {
+                    font-size: 1rem;
                     position: absolute;
                     top: 50%;
                     transform: translateY(-55%);
@@ -207,28 +243,71 @@ async function handleLogin() {
                 }
             }
 
+            .forgot {
+                width: 100%;
+                text-align: right;
+                margin-top: 1rem;
+                color: gray;
+                cursor: pointer;
+                text-decoration: underline;
+
+                @media screen and (max-width: 768px) {
+                    margin-top: 12px;
+                }
+            }
+
             .login-button {
                 appearance: none;
+                width: 100%;
                 height: 3rem;
-                border-radius: 1.5rem;
+                border-radius: 1rem;
                 border: none;
                 outline: none;
                 color: white;
                 cursor: pointer;
                 background-color: var(--theme-color);
+                font-size: 1.2rem;
+                font-weight: 500;
                 margin-top: 1.5rem;
                 box-shadow: 0 3px 10px #fe5623ad;
-                transition: all 0.3s ease-in-out;
+                outline: 1px solid transparent;
+                transition: all 0.4s;
 
-                &:hover {
-                    outline: 1px solid var(--theme-color);
+                // &:hover {
+                //     outline: 1px solid var(--theme-color);
+                // }
+
+                &:active {
+                    background-color: #fe5723;
+                    box-shadow: 0 2px 5px #fe5623ad;
+                }
+
+                @media screen and (max-width: 768px) {
+                    margin-top: 1rem;
                 }
             }
 
-            .forgot {
-                cursor: pointer;
+            .register {
+                width: 100%;
+
+                .colored {
+                    color: var(--theme-color);
+                    font-weight: 500;
+                    cursor: pointer;
+                }
             }
         }
+    }
+}
+</style>
+
+<style lang="scss">
+.n-divider:not(.n-divider--vertical) {
+    margin-top: 2rem;
+    margin-bottom: 0;
+
+    @media screen and (max-width: 768px) {
+        margin-top: 24px;
     }
 }
 </style>

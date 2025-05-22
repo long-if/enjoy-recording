@@ -6,26 +6,31 @@
             v-if="Capacitor.isNativePlatform()"
             @click="DrawerVisibility = !DrawerVisibility">
             <svg class="icon" aria-hidden="true">
-                <use
+                <!-- <use
                     :xlink:href="
                         DrawerVisibility
                             ? '#icon-shouqicaidan'
                             : '#icon-zhankaicaidan'
-                    "></use>
+                    "></use> -->
+                <use xlink:href="#icon-cebianlan"></use>
             </svg>
         </div>
         <div class="title">{{ currentTitle }}</div>
-        <div class="icon-box" v-if="!Capacitor.isNativePlatform() && openedNotes.length > 0">
+        <div
+            class="icon-box"
+            v-if="!Capacitor.isNativePlatform() && openedNotes.length > 0">
             <svg class="icon" aria-hidden="true">
                 <use xlink:href="#icon-chehui"></use>
             </svg>
         </div>
-        <div class="icon-box left" v-if="!Capacitor.isNativePlatform() && openedNotes.length > 0">
+        <div
+            class="icon-box left"
+            v-if="!Capacitor.isNativePlatform() && openedNotes.length > 0">
             <svg class="icon" aria-hidden="true">
                 <use xlink:href="#icon-qianjin"></use>
             </svg>
         </div>
-        <div class="icon-box" v-show="openedNotes.length > 0">
+        <div class="icon-box star" v-show="openedNotes.length > 0">
             <svg class="icon" aria-hidden="true">
                 <use xlink:href="#icon-xing"></use>
             </svg>
@@ -33,7 +38,10 @@
         <div
             class="icon-box"
             v-show="openedNotes.length > 0"
-            @click="editable = !editable;EventEmitter.emit('setEditable', editable)">
+            @click="
+                editable = !editable;
+                EventEmitter.emit('setEditable', editable);
+            ">
             <svg class="icon" aria-hidden="true">
                 <use
                     :xlink:href="
@@ -80,7 +88,6 @@ const currentTitle = computed(() => {
     top: 0;
     z-index: 90;
 
-
     .title {
         position: absolute;
         left: 50%;
@@ -96,11 +103,6 @@ const currentTitle = computed(() => {
         align-items: center;
         border-radius: 10px;
 
-        &:hover {
-            cursor: pointer;
-            background-color: #eff0f0;
-        }
-
         .icon {
             width: var(--size);
             height: var(--size);
@@ -112,6 +114,13 @@ const currentTitle = computed(() => {
 
     .show-drawer {
         margin-right: auto;
+        --box-size: 32px;
+        --size: 22px;
+    }
+
+    .star {
+        --box-size: 32px;
+        --size: 22px;
     }
 
     .left {

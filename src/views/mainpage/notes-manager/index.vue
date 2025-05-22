@@ -226,16 +226,6 @@ const notesGroupOptions = ref([
         icon: renderIcon(Afferent),
     },
     {
-        label: "导出",
-        key: "export",
-        icon: renderIcon(Export),
-    },
-    {
-        label: "在新窗口打开",
-        key: "openNewWindow",
-        icon: renderIcon(AddWeb),
-    },
-    {
         label: "收藏",
         key: "star",
         icon: renderIcon(Star),
@@ -313,9 +303,17 @@ function addNotesGroup(parent: NotesTreeNode | null) {
 
 function renderIcon(icon: Component) {
     return () => {
-        return h(NIcon, null, {
-            default: () => h(icon),
-        });
+        return h(
+            NIcon,
+            {
+                style: {
+                    translate: Capacitor.isNativePlatform() ? "0 -2px" : 'none',
+                },
+            },
+            {
+                default: () => h(icon),
+            }
+        );
     };
 }
 
@@ -613,8 +611,10 @@ function handleDrop({
             app-region: no-drag;
 
             &:hover {
-                cursor: pointer;
-                background-color: #eff0f0;
+                @media screen and (min-width: 768px) {
+                    cursor: pointer;
+                    background-color: #eff0f0;
+                }
             }
 
             .icon {

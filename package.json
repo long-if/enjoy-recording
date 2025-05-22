@@ -3,14 +3,20 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "author": "Long Yifu",
+  "author": "Long Yifu <lf137more@gmail.com>",
+  "email": "lf137more@gmail.com",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",
     "electron:build": "vue-tsc && vite build && electron-builder",
     "ionic:build": "vue-tsc && vite build && cap sync",
+    "build:win": "vue-tsc && vite build && electron-builder --win",
+    "build:linux": "vue-tsc && vite build && electron-builder --linux",
+    "build:mac": "vue-tsc && vite build && electron-builder --mac",
+    "build:all": "vue-tsc && vite build && electron-builder -mwl",
     "sync": "cap sync",
-    "android": "cap open android",
+    "android:ide": "cap open android",
+    "ios:ide": "cap open ios",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -12,6 +12,7 @@
     "node_modules/**/*"
   ],
   "mac": {	
+    "icon": "public/logo.png",
     "target": [
       "dmg"
     ],
@@ -36,8 +37,10 @@
     "deleteAppDataOnUninstall": false
   },
   "linux": {
+    "icon": "public/logo.png",
+    "category": "Utility",
     "target": [
-      "AppImage"
+      "deb"
     ],
     "artifactName": "${productName}-Linux-${version}.${ext}"
   }

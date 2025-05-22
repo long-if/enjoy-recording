@@ -1,5 +1,5 @@
 @use './theme.scss'as t;
-@use './tiptap/index.scss' as tiptap;
+@use './tiptap/index.scss'as tiptap;
 
 /*
 1. 使用更直观的 box-sizing 模型
@@ -9,6 +9,17 @@
 *::after {
   box-sizing: border-box;
   user-select: none;
+
+  @media screen and (max-width: 768px) {
+    &:hover {
+      background: unset !important;
+      color: unset !important;
+      border: unset !important;
+      transform: unset !important;
+      opacity: unset !important;
+      box-shadow: unset !important;
+    }
+  }
 }
 
 /*
@@ -86,4 +97,3 @@ h6 {
 #__next {
   isolation: isolate;
 }
-

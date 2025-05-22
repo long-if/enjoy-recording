@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -30,16 +30,23 @@ function createWindow() {
     } : {},
     darkTheme: true
   });
-  win.webContents.on("did-fail-load", (event, errorCode, errorDescription) => {
-    console.error("Failed to load:", errorCode, errorDescription);
-  });
+  win.webContents.on(
+    "did-fail-load",
+    (event, errorCode, errorDescription) => {
+      console.error("Failed to load:", errorCode, errorDescription);
+    }
+  );
   win.webContents.on("did-finish-load", () => {
     console.log("Window loaded successfully");
-    win == null ? void 0 : win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
+    win == null ? void 0 : win.webContents.send(
+      "main-process-message",
+      (/* @__PURE__ */ new Date()).toLocaleString()
+    );
   });
   if (VITE_DEV_SERVER_URL) {
     console.log("Loading development URL:", VITE_DEV_SERVER_URL);
     win.loadURL(VITE_DEV_SERVER_URL);
+    win.setMenuBarVisibility(false);
   } else {
     const indexPath = path.join(RENDERER_DIST, "index.html");
     console.log("Loading production file:", indexPath);
@@ -57,7 +64,15 @@ app.on("activate", () => {
     createWindow();
   }
 });
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+  ipcMain.on("setTitleBarOverlay", handleSetTitleBarOverlay);
+});
+function handleSetTitleBarOverlay(event, options) {
+  const webContents = event.sender;
+  const win2 = BrowserWindow.fromWebContents(webContents);
+  if (win2) win2.setTitleBarOverlay(options);
+}
 export {
   MAIN_DIST,
   RENDERER_DIST,

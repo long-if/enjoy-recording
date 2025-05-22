@@ -1,7 +1,7 @@
 <template>
     <router-view v-slot="{ Component }">
         <n-config-provider :theme-overrides="themeOverrides" abstract>
-            <n-message-provider>
+            <n-message-provider :placement=" Capacitor.isNativePlatform() ? 'bottom' : 'top'">
                 <n-modal-provider>
                     <n-dialog-provider>
                         <component :is="Component" />
@@ -13,6 +13,7 @@
 </template>
 
 <script setup lang="ts">
+import { Capacitor } from "@capacitor/core";
 import { darkTheme, useOsTheme } from "naive-ui";
 import { computed } from "vue";
 const osTheme = useOsTheme();
@@ -25,8 +26,8 @@ const themeOverrides: GlobalThemeOverrides = {
     common: {
         primaryColor: "#FF6600",
         infoColor: "#FF6600",
-        infoColorHover: "#ffa571",
-        infoColorPressed: "#a34405",
+        infoColorHover: "#FF6600",
+        infoColorPressed: "#fe5623",
         infoColorSuppl: "#FF6600",
     },
     Input: {
