@@ -10,6 +10,18 @@
                 <div class="label">—— Enjoying Recording ——</div>
             </div>
             <form class="form">
+                <label for="email" class="email">
+                    <svg class="icon email" aria-hidden="true">
+                        <use xlink:href="#icon-youxiang"></use>
+                    </svg>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="邮箱"
+                        v-model="email"
+                        required />
+                </label>
                 <label for="username" class="username">
                     <svg class="icon" aria-hidden="true">
                         <use xlink:href="#icon-zhanghao"></use>
@@ -43,15 +55,14 @@
                         <use :xlink:href="code"></use>
                     </svg>
                 </label>
-                <div class="forgot">忘记密码？</div>
                 <input
                     type="button"
-                    class="login-button"
-                    value="登录"
-                    @click="handleLogin" />
-                <n-divider class="register" title-placement="center">
-                    <span>还没有账号？</span>
-                    <span class="colored" @click="router.push('/register')">现在注册!</span>
+                    class="register-button"
+                    value="注册"
+                    @click="handleRegister" />
+                    <n-divider class="register" title-placement="center">
+                    <span>已有账号？</span>
+                    <span class="colored" @click="router.push('/login')">直接登录！</span>
                 </n-divider>
             </form>
         </div>
@@ -61,12 +72,13 @@
 <script setup>
 import { useMessage } from "naive-ui";
 import { useStorage } from "@vueuse/core";
-import { useLoginApi } from "@/api/login";
+import { useRegisterApi } from "@/api/register";
 const router = useRouter();
-const { login } = useLoginApi();
+const { register } = useRegisterApi();
 const message = useMessage();
 const username = ref("");
 const password = ref("");
+const email = ref("");
 
 onMounted(() => {
     try {
@@ -75,11 +87,10 @@ onMounted(() => {
             symbolColor: "#ffffff",
             height: 48,
         });
+    } catch {
+        console.log("当前为非Electron环境");
     }
-    catch {
-        console.log('当前为非Electron环境')
-    }
-})
+});
 // 密码显隐
 const input = useTemplateRef("passwordRef");
 const code = ref("#icon-a-Property1xianshi");
@@ -93,26 +104,21 @@ const showHide = () => {
     }
 };
 
-async function handleLogin() {
-    if (username.value === "" || password.value === "") {
-        message.error("请输入账号和密码！");
+async function handleRegister() {
+    if (username.value === "" || password.value === "" || email.value === "") {
+        message.error("请输入邮箱，账号和密码！");
         return;
     }
-    // 这里可以添加登录逻辑，比如调用API等
-    // 登录成功后跳转到首页
     try {
-        const response = await login({
+        const response = await register({
             username: username.value,
             password: password.value,
+            email: email.value,
         });
-        message.success("登录成功！");
-        // 登录成功后可以存储token等信息
-        console.log(response.data.token);
-        const token = useStorage("token");
-        token.value = response.data.token;
-        router.push("/mainpage");
+        message.success("注册成功！");
+        router.push("/login");
     } catch (error) {
-        message.error("登录失败，请检查账号和密码！");
+        message.error("注册失败!", error.message);
         return;
     }
 }
@@ -179,7 +185,7 @@ async function handleLogin() {
         }
 
         .form {
-            height: 350px;
+            height: 400px;
             padding: 2rem;
             background-color: white;
             border-radius: 1.5rem;
@@ -189,7 +195,7 @@ async function handleLogin() {
             align-items: center;
 
             @media screen and (max-width: 768px) {
-                height: 300px;
+                height: 360px;
                 padding: 1.5rem;
             }
 
@@ -199,11 +205,21 @@ async function handleLogin() {
                 position: relative;
 
                 &.username {
-                    margin-top: 0;
+                    margin-top: 24px;
                 }
 
                 &.password {
-                    margin-top: 16px;
+                    margin-top: 24px;
+                }
+
+                @media screen and (max-width: 768px) {
+                    &.username {
+                        margin-top: 18px;
+                    }
+
+                    &.password {
+                        margin-top: 18px;
+                    }
                 }
 
                 input {
@@ -234,6 +250,10 @@ async function handleLogin() {
                     top: 50%;
                     transform: translateY(-55%);
                     left: 0.5em;
+
+                    &.email {
+                        scale: 0.95;
+                    }
                 }
 
                 .icon.eye {
@@ -243,20 +263,7 @@ async function handleLogin() {
                 }
             }
 
-            .forgot {
-                width: 100%;
-                text-align: right;
-                margin-top: 1rem;
-                color: gray;
-                cursor: pointer;
-                text-decoration: underline;
-
-                @media screen and (max-width: 768px) {
-                    margin-top: 12px;
-                }
-            }
-
-            .login-button {
+            .register-button {
                 appearance: none;
                 width: 100%;
                 height: 3rem;
@@ -268,7 +275,7 @@ async function handleLogin() {
                 background-color: var(--theme-color);
                 font-size: 1.2rem;
                 font-weight: 500;
-                margin-top: 1.5rem;
+                margin-top: auto;
                 box-shadow: 0 3px 10px #fe5623ad;
                 outline: 1px solid transparent;
                 transition: all 0.4s;
@@ -283,7 +290,7 @@ async function handleLogin() {
                 }
 
                 @media screen and (max-width: 768px) {
-                    margin-top: 1rem;
+                    margin-top: auto;
                 }
             }
 
