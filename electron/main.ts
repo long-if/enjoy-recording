@@ -98,12 +98,12 @@ app.on("activate", () => {
 });
 
 app.whenReady().then(() => {
-  createWindow();
+    createWindow();
     ipcMain.on("setTitleBarOverlay", handleSetTitleBarOverlay);
 });
 
 function handleSetTitleBarOverlay(event: IpcMainEvent, options: object) {
     const webContents = event.sender;
     const win = BrowserWindow.fromWebContents(webContents);
-    if (win) win.setTitleBarOverlay(options);
+    if (win && process.platform !== "darwin") win.setTitleBarOverlay(options);
 }

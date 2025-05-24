@@ -28,3 +28,4 @@ electron.contextBridge.exposeInMainWorld("versions", {
   chrome: () => process.versions.chrome,
   electron: () => process.versions.electron
 });
+electron.contextBridge.exposeInMainWorld("platform", process.platform);

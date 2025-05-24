@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   "server": {
     // 使用本地前端资源
-    "url": "http://localhost:8000",
+    // "url": "http://localhost:8000",
     "cleartext": true,               // 允许非加密流量
     androidScheme: "http",
   },

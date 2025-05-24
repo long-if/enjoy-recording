@@ -31,5 +31,6 @@ interface versions {
 interface Window {
   ipcRenderer: import('electron').IpcRenderer;
   versions: versions;
+  platform: NodeJS.Platform;
 }
 

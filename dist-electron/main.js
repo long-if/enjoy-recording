@@ -71,7 +71,7 @@ app.whenReady().then(() => {
 function handleSetTitleBarOverlay(event, options) {
   const webContents = event.sender;
   const win2 = BrowserWindow.fromWebContents(webContents);
-  if (win2) win2.setTitleBarOverlay(options);
+  if (win2 && process.platform !== "darwin") win2.setTitleBarOverlay(options);
 }
 export {
   MAIN_DIST,

@@ -64,21 +64,23 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { NotebookOne } from "@icon-park/vue-next";
 const emit = defineEmits(["toggle"]);
 const { leftBarVisibility } = defineProps(["leftBarVisibility"]);
+const paddingTop = ref(window.platform !== "darwin" ? ".5rem" : "2rem");
+const width = ref(window.platform !== "darwin" ? "60px" : "65px");
 </script>
 
 <style scoped lang="scss">
 .left-sidebar {
     --box-size: 32px;
     --size: 20px;
-    width: var(--leftbar-width);
+    width: v-bind(width);
     height: 100vh;
     background-color: white;
     display: flex;
-    padding-top: 0.5rem;
+    padding-top: v-bind(paddingTop);
     padding-bottom: 1rem;
     flex-direction: column;
     justify-content: flex-start;
