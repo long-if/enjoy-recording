@@ -172,6 +172,7 @@ EventEmitter.on("conflict", () => {
         style: {},
     });
 });
+const statusBarHeight = ref(Capacitor.getPlatform() !== "ios" ? "36px" : "56px");
 </script>
 
 <style scoped lang="scss">
@@ -182,7 +183,7 @@ EventEmitter.on("conflict", () => {
     flex-direction: row;
 
     @media screen and (max-width: 768px) {
-        margin-top: var(--status-bar-height);
+        margin-top: v-bind(statusBarHeight);
     }
 
     &.gray {

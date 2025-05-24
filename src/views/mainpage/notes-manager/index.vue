@@ -5,19 +5,13 @@
                 <file-addition theme="outline" size="18" fill="#333" />
             </div>
             <div class="icon-box" @click="addNotesGroup(null)">
-                <folder-plus
-                    class="icon"
-                    theme="outline"
-                    size="18"
-                    fill="#333" />
+                <folder-plus class="icon" theme="outline" size="18" fill="#333" />
             </div>
             <div class="icon-box" @click="toggleExpand">
                 <svg class="icon" aria-hidden="true">
-                    <use
-                        :xlink:href="
-                            expandedKeys.length !== 0
-                                ? '#icon-shouqi1'
-                                : '#icon-zhankai'
+                    <use :xlink:href="expandedKeys.length !== 0
+                        ? '#icon-shouqi1'
+                        : '#icon-zhankai'
                         "></use>
                 </svg>
             </div>
@@ -36,35 +30,13 @@
             </div>
         </div>
         <div class="notes">
-            <n-tree
-                ref="tree"
-                block-line
-                show-line
-                draggable
-                virtual-scroll
-                selectable
-                expand-on-dragenter
-                expand-on-click
-                label-field="title"
-                :data="data"
-                :render-label="renderLabel"
-                :expanded-keys="expandedKeys"
-                :selected-keys="selectedKeys"
-                :render-switcher-icon="renderSwitcherIcon"
-                :override-default-node-click-behavior="override"
-                :node-props="nodeProps"
-                @drop="handleDrop"
+            <n-tree ref="tree" block-line show-line draggable virtual-scroll selectable expand-on-dragenter
+                expand-on-click label-field="title" :data="data" :render-label="renderLabel"
+                :expanded-keys="expandedKeys" :selected-keys="selectedKeys" :render-switcher-icon="renderSwitcherIcon"
+                :override-default-node-click-behavior="override" :node-props="nodeProps" @drop="handleDrop"
                 @update:expanded-keys="handleExpandedKeysChange" />
-            <n-dropdown
-                trigger="manual"
-                placement="bottom-start"
-                size="small"
-                :show="showDropdown"
-                :options="options"
-                :x="x"
-                :y="y"
-                @select="handleSelect"
-                @clickoutside="handleClickoutside" />
+            <n-dropdown trigger="manual" placement="bottom-start" size="small" :show="showDropdown" :options="options"
+                :x="x" :y="y" @select="handleSelect" @clickoutside="handleClickoutside" />
         </div>
     </div>
 </template>
@@ -360,6 +332,28 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
     };
 };
 
+let timer = null;
+document.addEventListener('touchstart', (e) => {
+    if (Capacitor.getPlatform() !== "ios") return;
+    else timer = setTimeout(() => {
+        clearTimeout(timer);
+        selectedOptionFromDropDown.value = option;
+        if (option.isLeaf) {
+            options.value = notesOptions.value;
+        } else {
+            options.value = notesGroupOptions.value;
+        }
+        showDropdown.value = true;
+        x.value = e.clientX;
+        y.value = e.clientY;
+    }, 750, e); // 750ms之后触发，可根据情况调整
+});
+document.addEventListener('touchend', (e) => {
+    if (Capacitor.getPlatform() !== "ios") return;
+    else clearTimeout(timer);
+});
+
+
 const inputRef = ref<HTMLInputElement | null>(null);
 function renderLabel({ option }: { option: TreeOption }) {
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -646,9 +640,7 @@ function handleDrop({
 
     @media screen and (max-width: 768px) {
         --n-font-size: 16px;
-        height: calc(
-            100vh - var(--top-height) - var(--status-bar-height) - 108px
-        );
+        height: calc(100vh - var(--top-height) - var(--status-bar-height) - 108px);
         padding-top: 4px;
         padding-bottom: 0.5rem;
     }
@@ -682,6 +674,7 @@ function handleDrop({
 
     .n-dropdown-option {
         border-radius: 4px;
+
         .n-dropdown-option-body {
             padding: 0 8px;
         }
