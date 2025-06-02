@@ -194,6 +194,7 @@ const editor = useEditor({
     onUpdate({ editor }) {
         const newContent = editor.getJSON();
         let titleValue = "未命名";
+        let skipVersionUpdate = false;
         // 找到第一个一级标题进行相关判断处理
         const $heading = editor.$node("heading");
         if ($heading && $heading.textContent) titleValue = $heading.textContent;
@@ -204,7 +205,11 @@ const editor = useEditor({
         // if (titleContent && titleContent[0].text) {
         //     titleValue = titleContent[0].text;
         // }
-        title.value = titleValue;
+        if (titleValue === title.value) {
+            // 如果标题没有变化，则不更新版本号
+            skipVersionUpdate = true;
+        }
+        else title.value = titleValue;
         content.value = newContent;
         EventEmitter.emit("updateNote", {
             key: activeNoteName.value,
@@ -213,6 +218,7 @@ const editor = useEditor({
                 content: newContent,
                 version: version,
             },
+            skipVersionUpdate,
         });
     },
 });
@@ -226,7 +232,7 @@ EventEmitter.on("updateNoteByFetch", (option: NotesTreeNode) => {
     }
 });
 
-EventEmitter.on("updateNoteTitle", (keyToUpdate: string, newTitle: string) => {
+EventEmitter.on("updateNoteTitle", (keyToUpdate: string, newTitle: string , skipUpdate = false) => {
     // console.log("keyToUpdate", keyToUpdate);
     // console.log("key", noteKey);
     if (keyToUpdate === noteKey) {
@@ -248,7 +254,7 @@ EventEmitter.on("updateNoteTitle", (keyToUpdate: string, newTitle: string) => {
         }
         editor.value?.commands.setContent(newContent);
         content.value = newContent;
-        EventEmitter.emit("updateNotesTree");
+        !skipUpdate && EventEmitter.emit("updateNotesTree");
     }
 });
 

@@ -40,7 +40,7 @@ import LeftSiderbar from "@/views/mainpage/left-sidebar/index.vue";
 import TopSection from "@/views/mainpage/top-section/index.vue";
 import NotesManager from "@/views/mainpage/notes-manager/index.vue";
 import NotesTabsView from "@/views/mainpage/notes-tabs-view/index.vue";
-import { useModal, useDialog } from "naive-ui";
+import { useModal, useDialog, useMessage } from "naive-ui";
 import { Splitpanes, Pane } from "splitpanes";
 import { debounce, throttle } from "lodash-es";
 import { useStorage } from "@vueuse/core";
@@ -48,6 +48,7 @@ import { useNoteApi } from "@/api/note";
 import { useNotesTabsStore } from "@/store/notesTabs";
 import { useNotesTreeStore } from "@/store/notesTree";
 import EventEmitter from "@/lib/EventEmitter";
+import { fa } from "element-plus/es/locale/index.mjs";
 const notesTabsStore = useNotesTabsStore();
 const notesTreeStore = useNotesTreeStore();
 const { data, version, hash, selectedKeys, expandedKeys } =
@@ -109,7 +110,24 @@ onMounted(async () => {
                         openedNotes.value[i] = notesTreeStore.allNodes.find(
                             (node) => node.key === (note.key as string)
                         )!;
-                        EventEmitter.emit("updateNoteByFetch", openedNotes.value[i]);
+                        if (note.key === selectedKeys.value[0]) {
+                            // 如果是当前选中的笔记
+                            if (
+                                JSON.stringify(note.content) !==
+                                JSON.stringify(openedNotes.value[i].content)
+                            ) {
+                                EventEmitter.emit(
+                                    "updateNoteTitle",
+                                    openedNotes.value[i].key,
+                                    openedNotes.value[i].title,
+                                    true
+                                );
+                            }
+                        } else
+                            EventEmitter.emit(
+                                "updateNoteByFetch",
+                                openedNotes.value[i]
+                            );
                     }
                     console.log("笔记树结构已更新", notes_tree);
                 } else {
@@ -124,7 +142,7 @@ onMounted(async () => {
         }
     }
 
-    timer = setTimeout(checkLatest, 3000);
+    timer = setTimeout(checkLatest, 0);
 });
 
 onUnmounted(() => {
@@ -154,11 +172,16 @@ const updateNotesTree = throttle(syncNotesTree, 500, {
 });
 EventEmitter.on("updateNotesTree", updateNotesTree);
 
-const syncNote = async (noteData: { key: string; nodeData: object }) => {
+const syncNote = async (noteData: {
+    key: string;
+    nodeData: object;
+    skipVersionUpdate: boolean;
+}) => {
     try {
         const response = await updateNoteByKey({
             key: noteData.key,
             nodeData: noteData.nodeData,
+            skipVersionUpdate: noteData.skipVersionUpdate,
         });
         let option = null;
         if (hash.value.has(noteData.key)) {
@@ -168,7 +191,7 @@ const syncNote = async (noteData: { key: string; nodeData: object }) => {
                 (node) => node.key === noteData.key
             )!;
         }
-        // option = Object.assign(option, response.data.node);
+        option = Object.assign(option, response.data.node);
         version.value = response.data.version;
         console.log("同步单个笔记数据成功", response.data);
     } catch (error) {
@@ -186,6 +209,7 @@ EventEmitter.on("conflict", () => {
         content: "请基于最新内容进行编辑",
         closable: false,
         maskClosable: false,
+        closeOnEsc: false,
         positiveText: "确认",
         onPositiveClick: async () => {
             try {

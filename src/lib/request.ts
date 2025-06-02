@@ -6,7 +6,7 @@ const router = useRouter();
 
 // 配置新建一个 axios 实例
 const service: AxiosInstance = axios.create({
-    baseURL: "http://long-if.top:7001/api/",
+    baseURL: "http://localhost:7001/api/",
     timeout: 2 * 60 * 1000,
     headers: { "Content-Type": "application/json" },
     paramsSerializer: {
