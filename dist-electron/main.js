@@ -1,25 +1,23 @@
-import { app, BrowserWindow, ipcMain } from "electron";
-import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
-createRequire(import.meta.url);
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-process.env.APP_ROOT = path.join(__dirname, "..");
-const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
-const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
-const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
-process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
-let win;
-function createWindow() {
-  win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, "logo.png"),
+import { app as i, BrowserWindow as l, ipcMain as f } from "electron";
+import { createRequire as m } from "node:module";
+import { fileURLToPath as w } from "node:url";
+import o from "node:path";
+m(import.meta.url);
+const d = o.dirname(w(import.meta.url));
+process.env.APP_ROOT = o.join(d, "..");
+const t = process.env.VITE_DEV_SERVER_URL, v = o.join(process.env.APP_ROOT, "dist-electron"), c = o.join(process.env.APP_ROOT, "dist");
+process.env.VITE_PUBLIC = t ? o.join(process.env.APP_ROOT, "public") : c;
+let e;
+function p() {
+  if (e = new l({
+    icon: o.join(process.env.VITE_PUBLIC, "logo.png"),
     width: 1400,
     height: 900,
     minWidth: 800,
     minHeight: 650,
     titleBarStyle: "hidden",
     webPreferences: {
-      preload: path.join(__dirname, "preload.mjs")
+      preload: o.join(d, "preload.mjs")
     },
     ...process.platform !== "darwin" ? {
       titleBarOverlay: {
@@ -28,53 +26,39 @@ function createWindow() {
         height: 48
       }
     } : {},
-    darkTheme: true
-  });
-  win.webContents.on(
+    darkTheme: !0
+  }), e.webContents.on(
     "did-fail-load",
-    (event, errorCode, errorDescription) => {
-      console.error("Failed to load:", errorCode, errorDescription);
+    (n, r, s) => {
+      console.error("Failed to load:", r, s);
     }
-  );
-  win.webContents.on("did-finish-load", () => {
-    console.log("Window loaded successfully");
-    win == null ? void 0 : win.webContents.send(
+  ), e.webContents.on("did-finish-load", () => {
+    console.log("Window loaded successfully"), e == null || e.webContents.send(
       "main-process-message",
       (/* @__PURE__ */ new Date()).toLocaleString()
     );
-  });
-  if (VITE_DEV_SERVER_URL) {
-    console.log("Loading development URL:", VITE_DEV_SERVER_URL);
-    win.loadURL(VITE_DEV_SERVER_URL);
-    win.setMenuBarVisibility(false);
-  } else {
-    const indexPath = path.join(RENDERER_DIST, "index.html");
-    console.log("Loading production file:", indexPath);
-    win.loadFile(indexPath);
+  }), t)
+    console.log("Loading development URL:", t), e.loadURL(t), e.setMenuBarVisibility(!1);
+  else {
+    const n = o.join(c, "index.html");
+    console.log("Loading production file:", n), e.loadFile(n);
   }
 }
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-    win = null;
-  }
+i.on("window-all-closed", () => {
+  process.platform !== "darwin" && (i.quit(), e = null);
 });
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
+i.on("activate", () => {
+  l.getAllWindows().length === 0 && p();
 });
-app.whenReady().then(() => {
-  createWindow();
-  ipcMain.on("setTitleBarOverlay", handleSetTitleBarOverlay);
+i.whenReady().then(() => {
+  p(), f.on("setTitleBarOverlay", h);
 });
-function handleSetTitleBarOverlay(event, options) {
-  const webContents = event.sender;
-  const win2 = BrowserWindow.fromWebContents(webContents);
-  if (win2 && process.platform !== "darwin") win2.setTitleBarOverlay(options);
+function h(n, r) {
+  const s = n.sender, a = l.fromWebContents(s);
+  a && process.platform !== "darwin" && a.setTitleBarOverlay(r);
 }
 export {
-  MAIN_DIST,
-  RENDERER_DIST,
-  VITE_DEV_SERVER_URL
+  v as MAIN_DIST,
+  c as RENDERER_DIST,
+  t as VITE_DEV_SERVER_URL
 };

@@ -18,6 +18,13 @@ export class EventEmitter<T extends string> {
         this.events.get(event)!.delete(listener);
     }
 
+    cancel(event: T) {
+        if (!this.events.has(event)) {
+            return;
+        }
+        this.events.get(event)!.clear();
+    }
+
     once(event: T, listener: Function) {
         const onceListener = (...args: any[]) => {
             listener(...args);

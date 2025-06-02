@@ -5,13 +5,19 @@
                 <file-addition theme="outline" size="18" fill="#333" />
             </div>
             <div class="icon-box" @click="addNotesGroup(null)">
-                <folder-plus class="icon" theme="outline" size="18" fill="#333" />
+                <folder-plus
+                    class="icon"
+                    theme="outline"
+                    size="18"
+                    fill="#333" />
             </div>
             <div class="icon-box" @click="toggleExpand">
                 <svg class="icon" aria-hidden="true">
-                    <use :xlink:href="expandedKeys.length !== 0
-                        ? '#icon-shouqi1'
-                        : '#icon-zhankai'
+                    <use
+                        :xlink:href="
+                            expandedKeys.length !== 0
+                                ? '#icon-shouqi1'
+                                : '#icon-zhankai'
                         "></use>
                 </svg>
             </div>
@@ -30,13 +36,35 @@
             </div>
         </div>
         <div class="notes">
-            <n-tree ref="tree" block-line show-line draggable virtual-scroll selectable expand-on-dragenter
-                expand-on-click label-field="title" :data="data" :render-label="renderLabel"
-                :expanded-keys="expandedKeys" :selected-keys="selectedKeys" :render-switcher-icon="renderSwitcherIcon"
-                :override-default-node-click-behavior="override" :node-props="nodeProps" @drop="handleDrop"
+            <n-tree
+                ref="tree"
+                block-line
+                show-line
+                draggable
+                virtual-scroll
+                selectable
+                expand-on-dragenter
+                expand-on-click
+                label-field="title"
+                :data="data"
+                :render-label="renderLabel"
+                :expanded-keys="expandedKeys"
+                :selected-keys="selectedKeys"
+                :render-switcher-icon="renderSwitcherIcon"
+                :override-default-node-click-behavior="override"
+                :node-props="nodeProps"
+                @drop="handleDrop"
                 @update:expanded-keys="handleExpandedKeysChange" />
-            <n-dropdown trigger="manual" placement="bottom-start" size="small" :show="showDropdown" :options="options"
-                :x="x" :y="y" @select="handleSelect" @clickoutside="handleClickoutside" />
+            <n-dropdown
+                trigger="manual"
+                placement="bottom-start"
+                size="small"
+                :show="showDropdown"
+                :options="options"
+                :x="x"
+                :y="y"
+                @select="handleSelect"
+                @clickoutside="handleClickoutside" />
         </div>
     </div>
 </template>
@@ -260,8 +288,14 @@ function addNote(parent: NotesTreeNode | null) {
     hash.value.set(newNode.key! as string, newNode);
     EventEmitter.emit("updateNotesTree");
 }
-EventEmitter.on("addNote", (parent: NotesTreeNode | null) => {
-    addNote(parent);
+
+onMounted(() => {
+    EventEmitter.on("addNote", (parent: NotesTreeNode | null) => {
+        addNote(parent);
+    });
+});
+onUnmounted(() => {
+    EventEmitter.cancel("addNote");
 });
 
 function addNotesGroup(parent: NotesTreeNode | null) {
@@ -279,7 +313,7 @@ function renderIcon(icon: Component) {
             NIcon,
             {
                 style: {
-                    translate: Capacitor.isNativePlatform() ? "0 -2px" : 'none',
+                    translate: Capacitor.isNativePlatform() ? "0 -2px" : "none",
                 },
             },
             {
@@ -353,7 +387,6 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
 //     if (Capacitor.getPlatform() !== "ios") return;
 //     else clearTimeout(timer);
 // });
-
 
 const inputRef = ref<HTMLInputElement | null>(null);
 function renderLabel({ option }: { option: TreeOption }) {
@@ -641,7 +674,9 @@ function handleDrop({
 
     @media screen and (max-width: 768px) {
         --n-font-size: 16px;
-        height: calc(100vh - var(--top-height) - var(--status-bar-height) - 108px);
+        height: calc(
+            100vh - var(--top-height) - var(--status-bar-height) - 108px
+        );
         padding-top: 4px;
         padding-bottom: 0.5rem;
     }

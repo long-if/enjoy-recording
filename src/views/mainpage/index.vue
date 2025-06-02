@@ -145,10 +145,6 @@ onMounted(async () => {
     timer = setTimeout(checkLatest, 0);
 });
 
-onUnmounted(() => {
-    clearTimeout(timer);
-});
-
 const storePaneSize = ({ prevPane }: { prevPane: { size: number } }) => {
     paneSize.value = prevPane.size;
 };
@@ -228,6 +224,12 @@ EventEmitter.on("conflict", () => {
         },
         style: {},
     });
+});
+
+onUnmounted(() => {
+    EventEmitter.off("updateNotesTree", updateNotesTree);
+    EventEmitter.off("updateNote", updateNote);
+    clearTimeout(timer);
 });
 const statusBarHeight = ref(
     Capacitor.getPlatform() !== "ios" ? "36px" : "56px"

@@ -72,7 +72,8 @@ import { useNotesTabsStore } from "@/store/notesTabs";
 import { useNoteApi } from "@/api/note";
 import { OptionIcon } from "lucide-vue-next";
 const notesTabsStore = useNotesTabsStore();
-const { openedNotes, activeNoteName, openedNotesKeys } = storeToRefs(notesTabsStore);
+const { openedNotes, activeNoteName, openedNotesKeys } =
+    storeToRefs(notesTabsStore);
 const notesTreeStore = useNotesTreeStore();
 const { selectedKeys, expandedKeys } = storeToRefs(notesTreeStore);
 const { getNotes, getNoteByKey, updateNotes } = useNoteApi();
@@ -189,7 +190,7 @@ const editor = useEditor({
         // The editor is ready.
         // console.log("editor is ready, content:", content.value);
         editor.commands.setContent(content.value);
-        editor.commands.focus();
+        editor.commands.focus('start');
     },
     onUpdate({ editor }) {
         const newContent = editor.getJSON();
@@ -208,8 +209,7 @@ const editor = useEditor({
         if (titleValue === title.value) {
             // 如果标题没有变化，则不更新版本号
             skipVersionUpdate = true;
-        }
-        else title.value = titleValue;
+        } else title.value = titleValue;
         content.value = newContent;
         EventEmitter.emit("updateNote", {
             key: activeNoteName.value,
@@ -223,46 +223,51 @@ const editor = useEditor({
     },
 });
 
-EventEmitter.on("updateNoteByFetch", (option: NotesTreeNode) => {
-    // console.log("option.key", option.key);
-    // console.log("key", noteKey);
-    if (option.key === noteKey) {
-        console.log("updateNoteByFetch事件的处理函数被调用");
-        editor.value?.commands.setContent(option.content!);
-    }
-});
-
-EventEmitter.on("updateNoteTitle", (keyToUpdate: string, newTitle: string , skipUpdate = false) => {
-    // console.log("keyToUpdate", keyToUpdate);
-    // console.log("key", noteKey);
-    if (keyToUpdate === noteKey) {
-        console.log("updateNoteTitle事件的处理函数被调用");
-        const newContent = editor.value!.getJSON();
-        const titleNode = newContent?.content?.find(
-            (node) => node?.type === "heading"
-        ) as JSONContent;
-        const titleContent = titleNode?.content;
-        if (titleContent) {
-            titleContent[0].text = newTitle;
-        } else {
-            titleNode.content = [
-                {
-                    type: "text",
-                    text: newTitle,
-                },
-            ];
+onMounted(() => {
+    EventEmitter.on("updateNoteByFetch", (option: NotesTreeNode) => {
+        // console.log("option.key", option.key);
+        // console.log("key", noteKey);
+        if (option.key === noteKey) {
+            console.log("updateNoteByFetch事件的处理函数被调用");
+            editor.value?.commands.setContent(option.content!);
         }
-        editor.value?.commands.setContent(newContent);
-        content.value = newContent;
-        !skipUpdate && EventEmitter.emit("updateNotesTree");
-    }
-});
+    });
 
-EventEmitter.on("setEditable", (editable: boolean) => {
-    if (activeNoteName.value === noteKey) {
-        editor.value?.setEditable(editable, false);
-    }
-}); 
+    EventEmitter.on(
+        "updateNoteTitle",
+        (keyToUpdate: string, newTitle: string, skipUpdate = false) => {
+            // console.log("keyToUpdate", keyToUpdate);
+            // console.log("key", noteKey);
+            if (keyToUpdate === noteKey) {
+                console.log("updateNoteTitle事件的处理函数被调用");
+                const newContent = editor.value!.getJSON();
+                const titleNode = newContent?.content?.find(
+                    (node) => node?.type === "heading"
+                ) as JSONContent;
+                const titleContent = titleNode?.content;
+                if (titleContent) {
+                    titleContent[0].text = newTitle;
+                } else {
+                    titleNode.content = [
+                        {
+                            type: "text",
+                            text: newTitle,
+                        },
+                    ];
+                }
+                editor.value?.commands.setContent(newContent);
+                content.value = newContent;
+                !skipUpdate && EventEmitter.emit("updateNotesTree");
+            }
+        }
+    );
+
+    EventEmitter.on("setEditable", (editable: boolean) => {
+        if (activeNoteName.value === noteKey) {
+            editor.value?.setEditable(editable, false);
+        }
+    });
+});
 
 function insertImage(currentEditor: Editor, files: File[]) {
     files.forEach((file) => {
@@ -286,12 +291,6 @@ function insertImage(currentEditor: Editor, files: File[]) {
 
 onBeforeUnmount(() => {
     editor.value?.destroy();
-});
-
-onMounted(() => {
-    // if (editor.value) {
-    //     console.log("Editor initialized:", editor.value.storage.characterCount);
-    // }
 });
 </script>
 
