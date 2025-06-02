@@ -332,26 +332,27 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
     };
 };
 
-let timer = null;
-document.addEventListener('touchstart', (e) => {
-    if (Capacitor.getPlatform() !== "ios") return;
-    else timer = setTimeout(() => {
-        clearTimeout(timer);
-        selectedOptionFromDropDown.value = option;
-        if (option.isLeaf) {
-            options.value = notesOptions.value;
-        } else {
-            options.value = notesGroupOptions.value;
-        }
-        showDropdown.value = true;
-        x.value = e.clientX;
-        y.value = e.clientY;
-    }, 750, e); // 750ms之后触发，可根据情况调整
-});
-document.addEventListener('touchend', (e) => {
-    if (Capacitor.getPlatform() !== "ios") return;
-    else clearTimeout(timer);
-});
+// @ts-ignore
+// let timer = null;
+// document.addEventListener('touchstart', (e) => {
+//     if (Capacitor.getPlatform() !== "ios") return;
+//     else timer = setTimeout(() => {
+//         clearTimeout(timer);
+//         selectedOptionFromDropDown.value = option;
+//         if (option.isLeaf) {
+//             options.value = notesOptions.value;
+//         } else {
+//             options.value = notesGroupOptions.value;
+//         }
+//         showDropdown.value = true;
+//         x.value = e.clientX;
+//         y.value = e.clientY;
+//     }, 750, e); // 750ms之后触发，可根据情况调整
+// });
+// document.addEventListener('touchend', (e) => {
+//     if (Capacitor.getPlatform() !== "ios") return;
+//     else clearTimeout(timer);
+// });
 
 
 const inputRef = ref<HTMLInputElement | null>(null);

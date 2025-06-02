@@ -6,6 +6,7 @@ import { defineStore } from "pinia";
 export const useNotesTreeStore = defineStore("notesTree", {
     state: () => ({
         data: [] as NotesTreeNode[],
+        version: '',
         hash: new Map<string, NotesTreeNode>(),
         selectedKeys: [] as string[],
         expandedKeys: [] as string[],

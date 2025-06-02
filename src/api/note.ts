@@ -28,6 +28,13 @@ export function useNoteApi()  {
                 method: 'post',
                 data,
             });
+        },
+        checkNotesVersion(data: object)   {
+            return request({
+                url: '/note/checkNotesVersion',
+                method: 'post',
+                data,
+            });
         }
     }
 }

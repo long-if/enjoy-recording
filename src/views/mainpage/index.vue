@@ -50,14 +50,21 @@ import { useNotesTreeStore } from "@/store/notesTree";
 import EventEmitter from "@/lib/EventEmitter";
 const notesTabsStore = useNotesTabsStore();
 const notesTreeStore = useNotesTreeStore();
-const { data, hash, selectedKeys, expandedKeys } = storeToRefs(notesTreeStore);
+const { data, version, hash, selectedKeys, expandedKeys } =
+    storeToRefs(notesTreeStore);
 const { openedNotes, openedNotesKeys, activeNoteName } =
     storeToRefs(notesTabsStore);
 
 const leftBarVisibility = ref(true);
 const notesManager = useTemplateRef("notesGroupList");
 const paneSize = useStorage("paneSize", 25);
-const { getNotes, getNoteByKey, updateNotes, updateNoteByKey } = useNoteApi();
+const {
+    getNotes,
+    getNoteByKey,
+    updateNotes,
+    updateNoteByKey,
+    checkNotesVersion,
+} = useNoteApi();
 // const modal = useModal();
 let dialog = useDialog();
 let timer: NodeJS.Timeout;
@@ -72,33 +79,57 @@ onMounted(async () => {
     } catch {
         console.log("当前为非Electron环境");
     }
-    try {
-        const response = await getNotes();
-        console.log("获取笔记数据成功", response.data);
-        data.value = response.data.notes_tree;
-    } catch (error) {
-        console.error("Error fetching notes:", error);
-    }
-
-    // TODO 笔记树结构多端同步
-    // async function checkLatest() {
-    //     try {
-    //         const response = await getNotes();
-    //         console.log("笔记树更新");
-    //         data.value = response.data.notes_tree;
-    //     } catch (error) {
-    //         console.error("Error fetching notes:", error);
-    //     } finally {
-    //         timer = setTimeout(checkLatest, 3000);
-    //     }
+    // try {
+    //     const response = await getNotes();
+    //     console.log("获取笔记数据成功", response.data);
+    //     data.value = response.data.notes_tree;
+    // } catch (error) {
+    //     console.error("Error fetching notes:", error);
     // }
 
-    // timer = setTimeout(checkLatest, 3000);
+    async function checkLatest() {
+        try {
+            const response = await checkNotesVersion({
+                version: version.value,
+            });
+            // console.log("笔记树版本检查成功", response.data);
+            const {
+                success,
+                isConsistent,
+                notes_tree,
+                version: serverVersion,
+            } = response.data;
+            if (success && !isConsistent) {
+                if (notes_tree) {
+                    data.value = Object.assign(data.value, notes_tree);
+                    version.value = serverVersion;
+                    hash.value.clear();
+                    for (let i = 0; i < openedNotes.value.length; i++) {
+                        let note = openedNotes.value[i];
+                        openedNotes.value[i] = notesTreeStore.allNodes.find(
+                            (node) => node.key === (note.key as string)
+                        )!;
+                        EventEmitter.emit("updateNoteByFetch", openedNotes.value[i]);
+                    }
+                    console.log("笔记树结构已更新", notes_tree);
+                } else {
+                    console.warn("服务器返回的笔记树结构为空");
+                }
+            }
+            // data.value = response.data.notes_tree;
+        } catch (error) {
+            console.error("Error fetching notes:", error);
+        } finally {
+            timer = setTimeout(checkLatest, 3000);
+        }
+    }
+
+    timer = setTimeout(checkLatest, 3000);
 });
 
-// onUnmounted(() => {
-//     clearTimeout(timer);
-// });
+onUnmounted(() => {
+    clearTimeout(timer);
+});
 
 const storePaneSize = ({ prevPane }: { prevPane: { size: number } }) => {
     paneSize.value = prevPane.size;
@@ -111,6 +142,7 @@ function scrollTo(option: NotesTreeNode) {
 const syncNotesTree = async () => {
     try {
         const response = await updateNotes({ notes_tree: data.value });
+        version.value = response.data.version;
         console.log("同步笔记树结构成功", response.data);
     } catch (error) {
         console.error("Error syncing notes:", error);
@@ -136,7 +168,8 @@ const syncNote = async (noteData: { key: string; nodeData: object }) => {
                 (node) => node.key === noteData.key
             )!;
         }
-        option = Object.assign(option, response.data.node);
+        // option = Object.assign(option, response.data.node);
+        version.value = response.data.version;
         console.log("同步单个笔记数据成功", response.data);
     } catch (error) {
         console.error("Error syncing note:", error);
@@ -172,7 +205,9 @@ EventEmitter.on("conflict", () => {
         style: {},
     });
 });
-const statusBarHeight = ref(Capacitor.getPlatform() !== "ios" ? "36px" : "56px");
+const statusBarHeight = ref(
+    Capacitor.getPlatform() !== "ios" ? "36px" : "56px"
+);
 </script>
 
 <style scoped lang="scss">
